@@ -160,6 +160,9 @@
       max-width: none;
     }
   }
+  .is-resizing .doc-rail__hover,
+  .is-resizing .doc-rail__tick,
+  .is-resizing .doc-rail__label,
   .is-resizing .app-shell,
   .is-resizing .app-main,
   .is-resizing .app-footer--panel,

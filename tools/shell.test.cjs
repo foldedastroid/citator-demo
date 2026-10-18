@@ -4,10 +4,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-test('continuous resize suppresses layout transitions until two quiet frames, including interrupted settling', () => {
+test('resize keeps transitions disabled between slow events and through interrupted settling', () => {
   let factory;
   let serial = 0;
   const frames = new Map();
+  const timers = new Map();
   const classes = new Set();
   const context = {
     document: {
@@ -17,6 +18,8 @@ test('continuous resize suppresses layout transitions until two quiet frames, in
     Alpine: { data: (_, value) => { factory = value; } },
     requestAnimationFrame: callback => { frames.set(++serial, callback); return serial; },
     cancelAnimationFrame: id => frames.delete(id),
+    setTimeout: callback => { timers.set(++serial, callback); return serial; },
+    clearTimeout: id => timers.delete(id),
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/alpine/components/app_shell.js'), 'utf8'), context);
   const state = factory();
@@ -25,18 +28,24 @@ test('continuous resize suppresses layout transitions until two quiet frames, in
     frames.clear();
     pending.forEach(callback => callback());
   };
+  const quiet = () => {
+    const pending = [...timers.values()];
+    timers.clear();
+    pending.forEach(callback => callback());
+  };
   state.onViewportResize();
-  state.onViewportResize();
+  step(); step();
   assert.equal(classes.has('is-resizing'), true);
-  assert.equal(frames.size, 1);
+  state.onViewportResize();
+  assert.equal(timers.size, 1);
+  quiet(); step();
+  assert.equal(classes.has('is-resizing'), true);
+  state.onViewportResize();
   step();
   assert.equal(classes.has('is-resizing'), true);
-  state.onViewportResize();
-  assert.equal(frames.size, 1);
-  step();
-  assert.equal(classes.has('is-resizing'), true);
-  step();
+  quiet(); step(); step();
   assert.equal(classes.has('is-resizing'), false);
+  assert.equal(state.resizing, false);
   assert.equal(frames.size, 0);
   assert.equal(state.resizeFrame, 0);
 });

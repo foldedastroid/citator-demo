@@ -33,6 +33,8 @@ document.addEventListener('alpine:init', () => {
 
     panelName: 'panel',
     resizeFrame: 0,
+    resizeTimer: 0,
+    resizing: false,
     resizeHandler: null,
     sidebarDismissHandler: null,
 
@@ -67,7 +69,7 @@ document.addEventListener('alpine:init', () => {
 
     holdSidebarPeek() {
       clearTimeout(this.sidebarPeekTimer);
-      if (!this.wide || this.sidebarOpen || this.sidebarDrag || this.sidebarPeekSuppressed) return;
+      if (this.resizing || !this.wide || this.sidebarOpen || this.sidebarDrag || this.sidebarPeekSuppressed) return;
       this.sidebarPeek = true;
       this.apply();
     },
@@ -218,6 +220,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     syncWidth(wide) {
+      this.onViewportResize();
       this.clearSidebarPeek();
       this.wide = wide;
       this.sidebarOpen = wide && shellStored(SIDEBAR_KEY) !== 'closed';
@@ -226,16 +229,28 @@ document.addEventListener('alpine:init', () => {
     },
 
     onViewportResize() {
-      this.cancelSidebarDrag();
       const root = document.documentElement;
+      this.resizing = true;
       root.classList.add('is-resizing');
+      this.cancelSidebarDrag();
+      if (this.sidebarPeek) {
+        this.clearSidebarPeek();
+        this.apply();
+      }
+      clearTimeout(this.resizeTimer);
       cancelAnimationFrame(this.resizeFrame);
-      this.resizeFrame = requestAnimationFrame(() => {
+      this.resizeFrame = 0;
+      // Window drags can deliver events slower than the display refresh rate.
+      this.resizeTimer = setTimeout(() => {
+        this.resizeTimer = 0;
         this.resizeFrame = requestAnimationFrame(() => {
-          root.classList.remove('is-resizing');
-          this.resizeFrame = 0;
+          this.resizeFrame = requestAnimationFrame(() => {
+            root.classList.remove('is-resizing');
+            this.resizing = false;
+            this.resizeFrame = 0;
+          });
         });
-      });
+      }, 180);
     },
 
     onKeydown(event) {
@@ -279,6 +294,7 @@ document.addEventListener('alpine:init', () => {
       document.addEventListener('click', (e) => this.onPanelClick(e));
     },
     destroy() {
+      clearTimeout(this.resizeTimer);
       this.clearSidebarPeek();
       this.cancelSidebarDrag();
       cancelAnimationFrame(this.resizeFrame);
