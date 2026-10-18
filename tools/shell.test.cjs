@@ -106,3 +106,31 @@ test('hover preview closes after leaving, preserves focused content, and never p
   state.holdSidebarPeek();
   assert.equal(state.sidebarPeek, false);
 });
+
+test('page interaction dismisses only a temporary preview without redirecting focus', () => {
+  let factory;
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/alpine/components/app_shell.js'), 'utf8'), {
+    document: { addEventListener: (_, fn) => fn() },
+    Alpine: { data: (_, fn) => { factory = fn; } }, clearTimeout() {},
+    localStorage: { setItem() {} },
+  });
+  const state = factory();
+  state.apply = () => {};
+  let focused = 0;
+  state.focusToggle = () => focused++;
+  state.sidebarOpen = false;
+  state.sidebarPeek = true;
+  state.dismissSidebarPeek({ target: { closest: () => true } });
+  assert.equal(state.sidebarPeek, true);
+  state.dismissSidebarPeek({ target: { closest: () => null } });
+  assert.equal(state.sidebarPeek, false);
+  assert.equal(state.sidebarOpen, false);
+  assert.equal(focused, 0);
+  state.toggleSidebar({ detail: 1 });
+  assert.equal(state.sidebarOpen, true);
+  assert.equal(focused, 0);
+  state.dismissSidebarPeek({ target: { closest: () => null } });
+  assert.equal(state.sidebarOpen, true);
+  state.toggleSidebar({ detail: 0 });
+  assert.equal(focused, 1);
+});

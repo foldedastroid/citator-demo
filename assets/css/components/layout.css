@@ -45,7 +45,8 @@
       transition: transform theme('transitionDuration.expansion') theme('transitionTimingFunction.standard'), visibility 0s;
     }
     .sidebar-peeking .sidebar-drag-edge {
-      left: max(0px, calc(var(--sidebar-w) - 6px));
+      left: 0;
+      z-index: calc(theme('zIndex.drawer') + 1);
     }
   }
   .is-sidebar-dragging { cursor: col-resize; user-select: none; }

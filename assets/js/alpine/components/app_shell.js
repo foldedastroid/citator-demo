@@ -34,6 +34,7 @@ document.addEventListener('alpine:init', () => {
     panelName: 'panel',
     resizeFrame: 0,
     resizeHandler: null,
+    sidebarDismissHandler: null,
 
     get sidebarExpanded() {
       return this.sidebarOpen ? 'true' : 'false';
@@ -88,6 +89,13 @@ document.addEventListener('alpine:init', () => {
       this.sidebarPeek = false;
     },
 
+    dismissSidebarPeek(event) {
+      if (!this.sidebarPeek || this.sidebarDrag) return;
+      if (event.target?.closest?.('#app-sidebar, .sidebar-drag-edge')) return;
+      this.clearSidebarPeek();
+      this.apply();
+    },
+
     startSidebarDrag(event) {
       if (!this.wide || event.button !== 0) return;
       const sidebar = document.getElementById('app-sidebar');
@@ -132,14 +140,16 @@ document.addEventListener('alpine:init', () => {
       this.finishSidebarDrag(true);
     },
 
-    toggleSidebar() {
+    toggleSidebar(event) {
       this.clearSidebarPeek();
       this.sidebarOpen = !this.sidebarOpen;
       this.sidebarPeekSuppressed = !this.sidebarOpen;
       if (this.wide) shellStore(SIDEBAR_KEY, this.sidebarOpen ? 'open' : 'closed');
       else if (this.sidebarOpen) this.panelOpen = false;
       this.apply();
-      this.focusToggle(this.sidebarOpen ? 'sidebar-collapse' : 'sidebar-toggle');
+      if (!event || event.detail === 0) {
+        this.focusToggle(this.sidebarOpen ? 'sidebar-collapse' : 'sidebar-toggle');
+      }
     },
     closeDrawer() {
       if (this.wide || (!this.sidebarOpen && !this.panelOpen)) return;
@@ -251,6 +261,9 @@ document.addEventListener('alpine:init', () => {
       const panelToggle = document.getElementById('panel-toggle');
       if (panelToggle) this.panelName = panelToggle.dataset.panel || 'panel';
       this.apply();
+      this.sidebarDismissHandler = (event) => this.dismissSidebarPeek(event);
+      document.addEventListener('wheel', this.sidebarDismissHandler, { passive: true });
+      document.addEventListener('pointerdown', this.sidebarDismissHandler);
       this.resizeHandler = () => this.onViewportResize();
       window.addEventListener('resize', this.resizeHandler, { passive: true });
       query.addEventListener('change', (e) => this.syncWidth(e.matches));
@@ -262,6 +275,8 @@ document.addEventListener('alpine:init', () => {
       this.cancelSidebarDrag();
       cancelAnimationFrame(this.resizeFrame);
       window.removeEventListener('resize', this.resizeHandler);
+      document.removeEventListener('wheel', this.sidebarDismissHandler);
+      document.removeEventListener('pointerdown', this.sidebarDismissHandler);
       document.documentElement.classList.remove('is-resizing');
     },
   }));
