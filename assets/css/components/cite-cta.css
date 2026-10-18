@@ -13,23 +13,19 @@
     );
     --cta-leaving: translate3d(0, 0, 0) scale(1);
     --cta-arriving: translate3d(calc(-1 * var(--cta-run)), 0, 0) scale(0);
-    @apply relative mt-4 flex h-9 w-full items-center overflow-hidden rounded-control border border-primary-600 bg-white pl-3 text-xs font-medium text-primary-700 no-underline;
+    @apply relative mt-4 flex h-9 w-full items-center overflow-hidden rounded-control border-0 bg-white pl-3 text-xs font-medium text-primary-700 no-underline;
     padding-right: var(--cta-pad-end);
-    transition: background-color 0s;
+    box-shadow: inset 0 0 0 1px theme("colors.primary.600");
   }
   .cite-cta:focus-visible,
   .cite-cta:active,
   .cite-cta[data-held] {
-    background-color: theme("colors.primary.600");
-    transition-delay: var(--cta-span);
     --cta-reveal: inset(-1px round 0px);
     --cta-leaving: translate3d(var(--cta-run), 0, 0) scale(0);
     --cta-arriving: translate3d(0, 0, 0) scale(1);
   }
   @media (hover: hover) {
     .cite-cta:hover {
-      background-color: theme("colors.primary.600");
-      transition-delay: var(--cta-span);
       --cta-reveal: inset(-1px round 0px);
       --cta-leaving: translate3d(var(--cta-run), 0, 0) scale(0);
       --cta-arriving: translate3d(0, 0, 0) scale(1);

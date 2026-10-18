@@ -126,7 +126,6 @@
   }
   .seg__btn:active {
     @apply bg-greyscale-100;
-    transform: translateY(1px);
   }
   .cite-chart__toolbar {
     @apply mb-3 mt-2 flex flex-wrap items-center gap-x-3 gap-y-2;

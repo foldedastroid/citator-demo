@@ -349,6 +349,9 @@
   .find:not(.is-open) .find__close {
     visibility: hidden;
   }
+  .find__row :is(.doc-rail__find, .find__close):not(:disabled):active {
+    transform: none;
+  }
   .find__row :is(.doc-rail__find, .find__close):focus-visible {
     outline-offset: -4px;
   }
