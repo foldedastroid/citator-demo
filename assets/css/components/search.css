@@ -63,6 +63,17 @@
   .search-box {
     @apply block h-10 w-full rounded-control border border-greyscale-200 bg-white pl-9 pr-3 text-sm text-greyscale-900 transition-colors placeholder:text-greyscale-400 hover:border-greyscale-300 focus:border-greyscale-400 focus:outline-none;
   }
+  /* Restyle the native cancel button without replacing its built-in clear action. */
+  :is(.search-box, .list-search__input)::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    width: theme('spacing.4');
+    height: theme('spacing.4');
+    margin-left: theme('spacing.2');
+    cursor: pointer;
+    background-color: theme('colors.greyscale.400');
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 4 8 8m0-8-8 8' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 4 8 8m0-8-8 8' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
   .search-box--plain {
     @apply h-9 px-3;
   }
