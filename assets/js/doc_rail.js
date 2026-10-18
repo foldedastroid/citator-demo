@@ -27,6 +27,41 @@
     const body = page.querySelector('.doc-layout__body');
     const layout = page.querySelector('.doc-layout');
     if (!field || !list || !thumb || !track || !layout) return;
+    const hover = document.createElement('span');
+    hover.className = 'doc-rail__hover';
+    hover.setAttribute('aria-hidden', 'true');
+    field.insertBefore(hover, list);
+    let hoveredPart = null;
+    let focusedPart = null;
+
+    function showPreview() {
+      const part = hoveredPart || focusedPart;
+      const show = part && layout.dataset.rail === 'labels' && part.level === 1;
+      hover.classList.toggle('is-visible', Boolean(show));
+      if (show) hover.style.transform = `translateY(${part.at.toFixed(1)}px)`;
+    }
+    function previewPart(event) {
+      const link = event.target.closest('.doc-rail__link');
+      return link ? parts[Number(link.dataset.index)] : null;
+    }
+    list.addEventListener('pointerover', (event) => {
+      if (event.pointerType === 'touch') return;
+      hoveredPart = previewPart(event);
+      showPreview();
+    });
+    list.addEventListener('pointerleave', () => {
+      hoveredPart = null;
+      showPreview();
+    });
+    list.addEventListener('focusin', (event) => {
+      focusedPart = previewPart(event);
+      showPreview();
+    });
+    list.addEventListener('focusout', (event) => {
+      const next = event.relatedTarget?.closest?.('.doc-rail__link');
+      focusedPart = next ? parts[Number(next.dataset.index)] : null;
+      showPreview();
+    });
     const column = layout.parentElement;
     let parts = [];
     let mains = [];
@@ -138,6 +173,15 @@
       const panelAt = fresh.findIndex((p) => p.panel);
       const after = fresh[panelAt + 1];
       if (panelAt > -1 && after && after.level === 1 && after.y - fresh[panelAt].y < 96) fresh.splice(panelAt, 1);
+      // Layout measurements must not replace focused links or restart a hover transition.
+      if (fresh.length === parts.length && fresh.every((p, i) =>
+        p.el === parts[i].el && p.label === parts[i].label && p.level === parts[i].level)) {
+        place();
+        return;
+      }
+      hoveredPart = null;
+      focusedPart = null;
+      showPreview();
       list.replaceChildren();
       parts = fresh.map((part, n) => {
         const item = document.createElement('li');
@@ -188,6 +232,7 @@
         if (label.scrollWidth > label.clientWidth + 1) p.link.title = p.label;
         else p.link.removeAttribute('title');
       });
+      showPreview();
       cut();
       measure();
       markerNow = markerGoal;

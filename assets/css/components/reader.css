@@ -133,8 +133,25 @@
   .doc-rail__item.is-reached .doc-rail__tick {
     @apply bg-primary-600;
   }
+  .doc-rail__hover {
+    @apply pointer-events-none absolute left-4 right-0 z-[1] h-6 rounded-control bg-greyscale-100 opacity-0;
+    top: -0.75rem;
+    transition: transform theme('transitionDuration.expansion') theme('transitionTimingFunction.standard'), opacity theme('transitionDuration.popover') ease;
+  }
+  .doc-rail__hover.is-visible { opacity: 1; }
   .doc-rail__tick {
-    @apply h-px w-2 flex-shrink-0 bg-current;
+    @apply h-px w-2.5 flex-shrink-0 bg-current;
+    transform: translateX(3px);
+    transition: width theme('transitionDuration.expansion') theme('transitionTimingFunction.standard'), background-color theme('transitionDuration.popover') ease;
+  }
+  .doc-rail__link:is(:hover, :focus-visible) .doc-rail__tick,
+  .doc-rail__item.is-active .doc-rail__tick {
+    @apply w-4 bg-primary-600;
+  }
+  .doc-rail__item.is-active .doc-rail__tick { height: 2px; }
+  .doc-layout[data-rail="labels"] .doc-rail__item--l1 .doc-rail__link {
+    width: 100%;
+    gap: 0.375rem;
   }
   .doc-rail__item.is-active .doc-rail__label {
     @apply font-medium;
@@ -153,7 +170,8 @@
     grid-template-columns: 7rem minmax(0, 1fr);
   }
   .doc-layout[data-rail="labels"] .doc-rail__item--l1 .doc-rail__label {
-    @apply pointer-events-auto visible static -ml-px min-w-0 translate-y-0 truncate rounded-none border-0 bg-white py-1 pl-px pr-1.5 text-inherit opacity-100 shadow-none;
+    @apply pointer-events-auto visible absolute left-5 min-w-0 truncate rounded-none border-0 bg-transparent py-0.5 pl-px pr-1.5 text-inherit opacity-100 shadow-none;
+    max-width: calc(100% - 1.25rem);
     font-size: inherit;
     transition: none;
   }
@@ -162,12 +180,25 @@
   }
   .doc-layout[data-rail="labels"] .doc-rail__item--l1 .doc-rail__label {
     color: color-mix(in srgb, currentColor calc(var(--fade, 1) * 100%), white);
-    transition: color theme('transitionDuration.popover') ease;
+    transition: color theme('transitionDuration.popover') ease, translate theme('transitionDuration.expansion') theme('transitionTimingFunction.standard');
   }
   .doc-rail:hover .doc-rail__item--l1 .doc-rail__label,
   .doc-rail:focus-within .doc-rail__item--l1 .doc-rail__label,
   .doc-rail.is-scrubbing .doc-rail__item--l1 .doc-rail__label {
     color: inherit;
+  }
+  .doc-layout[data-rail="labels"] .doc-rail__item.is-active .doc-rail__label {
+    @apply text-primary-700;
+    translate: 2px 0;
+  }
+  .doc-layout[data-rail="labels"] .doc-rail__link:is(:hover, :focus-visible) .doc-rail__label {
+    @apply text-greyscale-900;
+    translate: 3px 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .doc-rail__hover,
+    .doc-rail__tick,
+    .doc-layout[data-rail="labels"] .doc-rail__label { transition: none; }
   }
   .switch-row {
     @apply mt-4 border-t border-greyscale-200 pt-3;
