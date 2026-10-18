@@ -223,6 +223,8 @@ document.addEventListener('alpine:init', () => {
         if ('ResizeObserver' in window) {
           const observer = new ResizeObserver(() => this.occFollow());
           observer.observe(this.$refs.occCard);
+          const reader = this.pageRoot.querySelector('.doc-layout__body');
+          if (reader) observer.observe(reader);
           lifecycle.cleanup(() => observer.disconnect());
         }
       },

@@ -107,3 +107,22 @@ test('moving between a citation and its preview cancels dismissal instead of res
   state.occRelease({ relatedTarget: source });
   assert.equal(state.occNav.open, true);
 });
+
+test('pinned citation centers on the visible reader across sidebar layouts', () => {
+  const reader = loadReader({
+    document: { addEventListener: (_, callback) => callback() },
+    window: { innerWidth: 1440 },
+  });
+  const state = reader.create();
+  state.occNav.open = true;
+  state.occPinned = true;
+  for (const [left, right] of [[300, 964], [52, 964], [300, 1380], [52, 1380], [-20, 1500]]) {
+    state.pageRoot = { querySelector: () => ({ getBoundingClientRect: () => ({ left, right }) }) };
+    state.occLocate();
+    const visibleLeft = Math.max(8, left);
+    const visibleRight = Math.min(1432, right);
+    assert.equal(state.occPos.left, (visibleLeft + visibleRight) / 2);
+    assert.equal(state.occPos.width, visibleRight - visibleLeft - 16);
+    assert.equal(state.occNavStyle.visibility, 'visible');
+  }
+});

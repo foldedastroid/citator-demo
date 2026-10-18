@@ -32,7 +32,11 @@ function createReaderCitations(lifecycle) {
       return this.occNav.open ? (this.occPinned ? 'is-open is-pinned' : 'is-open') : '';
     },
     get occNavStyle() {
-      if (this.occPinned) return {};
+      if (this.occPinned) return {
+        visibility: this.occPositioned ? 'visible' : 'hidden',
+        left: `${this.occPos.left}px`,
+        width: `${this.occPos.width}px`,
+      };
       return {
         visibility: this.occPositioned ? 'visible' : 'hidden',
         left: `${this.occPos.left}px`,
@@ -189,7 +193,18 @@ function createReaderCitations(lifecycle) {
       return this.occMentions(this.occNav.n)[this.occNav.index] || null;
     },
     occLocate() {
-      if (!this.occNav.open || this.occPinned) return;
+      if (!this.occNav.open) return;
+      if (this.occPinned) {
+        const reader = this.pageRoot.querySelector('.doc-layout__body');
+        if (!reader) return;
+        const rect = reader.getBoundingClientRect();
+        const left = Math.max(OCC_EDGE, rect.left);
+        const right = Math.min(window.innerWidth - OCC_EDGE, rect.right);
+        this.occPos = { ...this.occPos, left: (left + right) / 2,
+          width: Math.max(0, right - left - OCC_EDGE * 2) };
+        this.occPositioned = true;
+        return;
+      }
       const mention = this.occCurrent();
       const card = this.$refs.occCard;
       if (!mention || !card) return;
