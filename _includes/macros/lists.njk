@@ -1,11 +1,4 @@
-{# A clamped list of citations: up to `limit` entries show, in a block
-   cell (<dd data-cite-cell>) as many of them as fit on one line
-   (assets/js/cite_fit.js measures and hides the rest); every other entry
-   sits behind a "+N" button (composables/list_toggle.js) that expands the
-   enclosing cell, the nearest `data-cite-cell`, in place.
-   Without script the first `limit` entries show. `dot` separates entries
-   with a middle dot instead of a comma. `noun` names the entries for the
-   button's label. #}
+
 {% macro citeList(items, limit=3, dot=false, noun="citation") %}
 {%- set extra = (items | length) - limit -%}
 {%- if extra < 0 %}{% set extra = 0 %}{% endif -%}
@@ -20,6 +13,6 @@
 {%- if (items | length) > 1 %}
 <button type="button" class="cite-list__more" x-data="listToggle" x-on:click.stop.prevent="toggle"
         data-more="+{{ extra }}" data-less="less" data-noun="{{ noun }}"
-        aria-label="Show {{ extra }} more {{ noun }}{% if extra != 1 %}s{% endif %}"{% if extra == 0 %} hidden{% endif %}>+{{ extra }}</button>
+        aria-expanded="false" aria-label="Show {{ extra }} more {{ noun }}{% if extra != 1 %}s{% endif %}"{% if extra == 0 %} hidden{% endif %}>+{{ extra }}</button>
 {%- endif %}
 {% endmacro %}

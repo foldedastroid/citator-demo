@@ -34,9 +34,6 @@ STATE_NAMES: tuple[str, ...] = (
     "Guam", "Northern Mariana Islands", "American Samoa",
 )  # fmt: skip
 
-# Reporter abbreviations of the states. "N.D." / "S.D." are left out: in
-# a court name they read as a district, and both Dakotas' courts spell
-# their state in full.
 STATE_ABBREVIATIONS: dict[str, str] = {
     "Ala.": "Alabama", "Ariz.": "Arizona", "Ark.": "Arkansas",
     "Cal.": "California", "Colo.": "Colorado", "Conn.": "Connecticut",
@@ -56,12 +53,10 @@ STATE_ABBREVIATIONS: dict[str, str] = {
     "P.R.": "Puerto Rico",
 }  # fmt: skip
 
-# Courts whose display name names no state, or names the wrong one.
 COURT_STATE: dict[str, str] = {
     "dcd": "District of Columbia",
 }
 
-# The circuits read in their own order, not alphabetically.
 CIRCUIT_ORDER: dict[str, int] = {
     "ca1": 1, "ca2": 2, "ca3": 3, "ca4": 4, "ca5": 5, "ca6": 6, "ca7": 7,
     "ca8": 8, "ca9": 9, "ca10": 10, "ca11": 11, "cadc": 12, "cafc": 13,
@@ -78,7 +73,6 @@ def court_state(ds: DataSource, key: str) -> str:
     if ds.court_category.get(key) in ("scotus", "circuit"):
         return ""
     name = ds.court_display.get(key, key)
-    # longest first so "West Virginia" wins over "Virginia"
     for state in sorted(STATE_NAMES, key=len, reverse=True):
         if state in name:
             return state

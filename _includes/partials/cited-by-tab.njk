@@ -1,15 +1,10 @@
-{# Later Courts tab: one row per later opinion that cites this one, with what
-   it did itself and what it reports other courts did. Reads
-   `opinion.cited_by` (sorted severity then date), `opinion.cited_by_populated`,
-   `opinion.cited_by_scope` ("controlling" = every citing opinion from a
-   court that binds this one; "collection" = only the opinions on the
-   site) and `opinion.citing_counts`. Same column grid, sort dropdown and
-   filter menu as the Authorities tab. #}
+
 {% from "macros/list_header.njk" import listHeader, listToolbar %}
-{% from "macros/treatment.njk" import severityBadge, validationDot %}
+{% from "macros/treatment.njk" import severityBadge, validationDot, discussion %}
 {% from "macros/evidence.njk" import evidenceCard %}
 {% from "macros/lists.njk" import citeList %}
 {% from "macros/icons.njk" import icon %}
+{% from "macros/citing_chart.njk" import citingChart %}
 
 <section class="cited-by" aria-label="Citing opinions" x-data="citedByFilter">
   {% if opinion.cited_by_scope == "collection" %}
@@ -37,21 +32,23 @@
   {% elif opinion.cited_by | length == 0 %}
   <p class="tab-empty">Citing opinions have not been collected for this opinion yet.</p>
   {% else %}
+  {{ citingChart(citingBreak) }}
   {{ listToolbar([
-    {"key": "severity", "label": "Severity"},
-    {"key": "name", "label": "Case Name"},
-    {"key": "recency", "label": "Newest First"},
-    {"key": "mentions", "label": "Depth of Treatment"},
-    {"key": "court", "label": "Court Authority"}
+    {"key": "severity", "label": "Analysis (most negative first)"},
+    {"key": "name", "label": "Case name (A–Z)"},
+    {"key": "recency", "label": "Date (newest first)"},
+    {"key": "mentions", "label": "Discussion (deepest first)"},
+    {"key": "court", "label": "Court (highest first)"}
   ], "citing opinions", "Applied treatment", "Recognized treatment", flags.validation) }}
   {{ listHeader([
     {"label": "Citing opinion", "title": "The citing opinion, under what it does to this case and what it recognizes other courts did"},
     {"label": "Date filed", "class": "col-head--pad", "title": "When the citing opinion was decided"},
-    {"label": "Depth", "class": "col-head--pad", "title": "How many times the citing opinion cites this case"}
+    {"label": "Discussion", "class": "col-head--pad", "title": "How many times the citing opinion cites this case"}
   ]) }}
-  <ul role="list" class="citator-list">
+  <ul role="list" class="citator-list" x-bind:class="listClass">
     {% for cb in opinion.cited_by %}
     <li
+      id="citing-{{ cb.row_id }}"
       data-row-id="{{ cb.row_id }}"
       data-search="{{ cb.search_text }}"
       data-severity="{{ cb.severity | lower }}"
@@ -63,10 +60,14 @@
       data-severity-index="{{ cb.severity_index }}"
       data-mentions-index="{{ cb.mentions_index }}"
       data-court-index="{{ cb.court_index }}"
+      data-court-label="{{ cb.citing_court_display or 'Court not identified' }}"
+      data-year="{{ (cb.citing_date_filed or '').slice(0, 4) }}"
+      data-date="{{ cb.citing_date_filed or '' }}"
       x-bind:class="rowClass"
       x-bind:style="rowStyle"
       class="cited-authority sev-rail sev-rail--{{ cb.severity | lower }}"
     >
+      <div class="court-group-head" aria-hidden="true">{{ cb.citing_court_display or "Court not identified" }}</div>
       {% if cb.has_detail %}<details class="authority-row"><summary class="authority-row__summary">{% else %}<div>{% endif %}
         <div class="citator-row">
           <div class="citator-row__treatment">
@@ -93,16 +94,18 @@
               {% endif %}
 
             </div>
-            {# court, case number and citations on one line, as the
-               Authorities rows lay theirs out #}
+
+
             <p class="citator-row__meta">
               {{ cb.citing_court_display }}
               {%- if cb.citing_docket_numbers | length %} <span class="cite-list__dot" aria-hidden="true">·</span> <span class="citator-row__meta-item" data-cite-cell>No. {{ citeList(cb.citing_docket_numbers, noun="case number") }}</span>{% endif -%}
               {%- if cb.citing_citations | length %} <span class="cite-list__dot" aria-hidden="true">·</span> <span class="citator-row__meta-item" data-cite-cell>{{ citeList(cb.citing_citations, dot=true) }}</span>{% endif -%}
             </p>
+            {% set lead = cb.evidence_cards[0] if cb.evidence_cards | length else null %}
+            {% if lead and lead.quote %}<p class="citator-row__excerpt">{{ lead.quote_html | safe }}</p>{% endif %}
           </div>
           <div class="citator-row__date">{{ cb.citing_date_short }}</div>
-          <div class="citator-row__cited" title="{{ cb.citing_n_mentions }} mention{% if cb.citing_n_mentions != 1 %}s{% endif %} of this case">{{ cb.citing_n_mentions or "" }}</div>
+          <div class="citator-row__cited">{{ discussion(cb.citing_n_mentions, "of this case") }}</div>
           {% if cb.has_detail %}
           {{ icon("chevron-right", "citator-row__chevron expand-chevron") }}
           {% else %}<span aria-hidden="true"></span>{% endif %}
@@ -111,8 +114,8 @@
         <div class="authority-detail">
           {% for c in cb.evidence_cards %}
             {% if cb.is_scoped and (cb.citing_authority_n or c.quote_status != "missing") %}
-              {# the citing opinion's own Authorities row for this case, or
-                 the passage itself when its authorities were never extracted #}
+
+
               {% set href = "/opinion/" ~ cb.citing_cluster_id ~ "/" ~ ("#authority-" ~ cb.citing_authority_n if cb.citing_authority_n else "#q=" ~ (c.quote | urlencode)) %}
               {{ evidenceCard(c, treatment_definitions, "the citing opinion", href, "See it in the citing opinion") }}
             {% else %}

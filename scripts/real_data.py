@@ -48,7 +48,6 @@ def _tier(treatment: Any, recorded: Any) -> str:
 
 
 DATA_SOURCE = Path(__file__).parent.parent / "data-source"
-# payload folders in load order, with the tier their opinions belong to
 PAYLOAD_DIRS: tuple[tuple[str, str], ...] = (
     ("anchor_opinions", "anchor"),
     ("authorities", "authority"),
@@ -61,9 +60,6 @@ CITING_COUNTS_FILES = (
 )
 CITING_EDGES_FILES = ("citing_edges.csv", "citing_edges_round2.csv")
 
-# Hand-written names for the anchors' courts; every other court is named
-# from its payload's court_full_name and classified from its CourtListener
-# jurisdiction code.
 COURT_DISPLAY: dict[str, str] = {
     "scotus": "Supreme Court of the United States",
     "ca2": "Court of Appeals for the Second Circuit",
@@ -75,7 +71,6 @@ COURT_DISPLAY: dict[str, str] = {
     "nysurct": "New York Surrogate's Court",
     "mesuperct": "Maine Superior Court",
 }
-# lower = higher court
 COURT_LEVEL: dict[str, int] = {
     "scotus": 0,
     "ca1": 1, "ca2": 1, "ca3": 1, "ca4": 1, "ca5": 1, "ca6": 1, "ca7": 1,
@@ -116,7 +111,6 @@ CATEGORY_JURISDICTION: dict[str, str] = {
 }
 JURISDICTION_DISPLAY: dict[str, str] = {"federal": "Federal", "state": "State"}
 JURISDICTION_ORDER: tuple[str, ...] = ("federal", "state")
-# CourtListener jurisdiction code → (category, level, court of last resort)
 JURISDICTION_CLASS: dict[str, tuple[str, int, bool]] = {
     "F": ("circuit", 1, False),
     "FD": ("district", 2, False),
@@ -132,21 +126,17 @@ JURISDICTION_CLASS: dict[str, tuple[str, int, bool]] = {
 DEFAULT_CLASS = ("state_trial", 3, False)
 
 
-# Reporters in the order a citation list shows them: the official and
-# primary reporters first; anything else follows in the source's order.
 _REPORTER_RANK: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p)
     for p in (
-        r"^\d+ U\.S\. \d",  # United States Reports
-        r"^\d+ F\.(?: ?[234]d| ?4th)? \d",  # Federal Reporter
-        r"^\d+ F\. ?Supp\.(?: ?[23]d)? \d",  # Federal Supplement
-        r"^\d+ F\. ?App'x \d",  # Federal Appendix
-        # regional and state official reporters
+        r"^\d+ U\.S\. \d",
+        r"^\d+ F\.(?: ?[234]d| ?4th)? \d",
+        r"^\d+ F\. ?Supp\.(?: ?[23]d)? \d",
+        r"^\d+ F\. ?App'x \d",
         r"^\d+ (?:[NS]\.[EW]\.|A\.|P\.|So\.|Cal\.|N\.Y\.|Ill\.|Mass\.|Pa\."
         r"|Ohio St\.|Wash\.|Tex\.|Mich\.)(?: ?[2345]d| ?[2345]th)? \d",
-        r"^\d+ S\. ?Ct\. \d",  # Supreme Court Reporter
-        r"^\d+ L\. ?Ed\.(?: ?2d)? \d",  # Lawyers' Edition
-        # courts with a reporter of their own
+        r"^\d+ S\. ?Ct\. \d",
+        r"^\d+ L\. ?Ed\.(?: ?2d)? \d",
         r"^\d+ (?:U\.S\. App\. D\.C\.|B\.R\.|Fed\. Cl\.|T\.C\.|Vet\. App\.) \d",
     )
 )
@@ -204,8 +194,6 @@ class ClusterResolver:
             name = _short_name(op.get("case_name") or "")
             if len(name) >= 5:
                 names.setdefault(name, set()).add(cid)
-        # a name shared by several decisions (a case's trial, appellate
-        # and final opinions) identifies none of them
         self.by_name = {
             n: next(iter(ids)) for n, ids in names.items() if len(ids) == 1
         }
@@ -268,7 +256,6 @@ class Loader:
                 _read_json_if_exists(root / name, {}).get("per_authority", {})
             )
 
-    # ── courts ───────────────────────────────────────────────────────
     def register_court(self, rec: JsonDict) -> None:
         """Make a payload's court known to the display, category and
         level maps (no-op for courts listed by hand)."""
@@ -290,7 +277,6 @@ class Loader:
         if last_resort:
             self.courts_of_last_resort.add(court)
 
-    # ── per-cluster files ────────────────────────────────────────────
     def centralia_writings(self, cluster_id: int) -> list[JsonDict] | None:
         data = _read_json_if_exists(
             self.centralia_dir / f"{cluster_id}.json", None
@@ -319,15 +305,11 @@ class Loader:
         groups_by_gid: dict[str, JsonDict] = {}
         rows: list[JsonDict] = []
         for g in data["groups"]:
-            # statutes, articles and unattached "Id."s are not authorities;
-            # left out of the converter state too, so their spans render
-            # as plain text
             if not is_case_group(g):
                 continue
             cluster = g.get("cited_cluster_id")
             cl_name = g.get("cl_name", "")
             if not cluster:
-                # link a group with no cluster id through its reporter cites
                 for c in g.get("citations", []):
                     hit = cite_map.get(c) or cite_map.get(
                         c.split(",")[0].strip()
@@ -349,7 +331,6 @@ class Loader:
                 "name": name,
                 "cluster": cluster,
             }
-            # every form this opinion cites the case as, in reading order
             forms = [f for f in (g.get("cited_as") or citations) if f != name]
             t = treatments.get(str(g["n"])) or {}
             applied = t.get("applied") or "Cited by"
@@ -419,8 +400,6 @@ class Loader:
         else:
             centralia = self.centralia_writings(rec["cluster_id"])
             writings = centralia or rec["opinions"]
-            # a PDF re-read resolves no citations: carry CourtListener's
-            # resolved reporter cites over by string match
             cite_map = citation_map(cl_htmls) if centralia else None
             state = None
         return {
@@ -470,7 +449,6 @@ class Loader:
                     paths.append((path, tier))
         return [self.opinion_record(path, tier) for path, tier in paths]
 
-    # ── edges ────────────────────────────────────────────────────────
     def controlling_pairs(
         self, opinions: list[JsonDict]
     ) -> set[tuple[int, int]]:
@@ -571,7 +549,6 @@ class Loader:
                             ),
                             "quote": rec.get("quote") or "",
                             "rationale": rec.get("rationale") or "",
-                            # the court the citing opinion says acted
                             "acting_case": (
                                 rec.get("acting_case") or ""
                             ).strip(),

@@ -1,0 +1,70 @@
+@layer components {
+  .cite-cta {
+    --cta-square: 1.625rem;
+    --cta-inset: 0.25rem;
+    --cta-pad-end: calc(var(--cta-square) + var(--cta-inset) + 0.75rem);
+    --cta-round: theme("borderRadius.mark");
+    --cta-run: 2.5rem;
+    --cta-span: 450ms;
+    --cta-curve: cubic-bezier(0.785, 0.135, 0.15, 0.86);
+    --cta-reveal: inset(
+      calc((100% - var(--cta-square)) / 2) var(--cta-inset) calc((100% - var(--cta-square)) / 2)
+        calc(100% - var(--cta-inset) - var(--cta-square)) round var(--cta-round)
+    );
+    --cta-leaving: translate3d(0, 0, 0) scale(1);
+    --cta-arriving: translate3d(calc(-1 * var(--cta-run)), 0, 0) scale(0);
+    @apply relative mt-4 flex h-9 w-full items-center overflow-hidden rounded-control border border-primary-600 bg-white pl-3 text-xs font-medium text-primary-700 no-underline;
+    padding-right: var(--cta-pad-end);
+  }
+  .cite-cta:focus-visible,
+  .cite-cta:active,
+  .cite-cta[data-held] {
+    --cta-reveal: inset(-1px round 0px);
+    --cta-leaving: translate3d(var(--cta-run), 0, 0) scale(0);
+    --cta-arriving: translate3d(0, 0, 0) scale(1);
+  }
+  @media (hover: hover) {
+    .cite-cta:hover {
+      --cta-reveal: inset(-1px round 0px);
+      --cta-leaving: translate3d(var(--cta-run), 0, 0) scale(0);
+      --cta-arriving: translate3d(0, 0, 0) scale(1);
+    }
+  }
+  .cite-cta:focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-primary-600;
+  }
+
+  .cite-cta__label {
+    @apply truncate;
+  }
+  .cite-cta__veil {
+    @apply pointer-events-none absolute inset-0 flex items-center bg-primary-600 pl-3 text-white;
+    padding-right: var(--cta-pad-end);
+    clip-path: var(--cta-reveal);
+    transition: clip-path var(--cta-span) var(--cta-curve);
+  }
+  .cite-cta__well {
+    @apply absolute inset-y-0 right-0 overflow-hidden;
+    width: calc(var(--cta-square) + var(--cta-inset));
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 0.3125rem);
+    mask-image: linear-gradient(to right, transparent, #000 0.3125rem);
+  }
+  .cite-cta__arrow {
+    @apply absolute h-3.5 w-3.5;
+    top: calc(50% - 0.4375rem);
+    left: calc(var(--cta-square) / 2 - 0.4375rem);
+    transition: transform var(--cta-span) var(--cta-curve);
+    will-change: transform;
+  }
+  .cite-cta__arrow--leaving {
+    transform: var(--cta-leaving);
+  }
+  .cite-cta__arrow--arriving {
+    transform: var(--cta-arriving);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cite-cta {
+      --cta-span: 0ms;
+    }
+  }
+}

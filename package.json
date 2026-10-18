@@ -1,10 +1,11 @@
 {
-  "name": "citator-demo",
+  "name": "citator-app",
   "version": "0.0.1",
   "private": true,
-  "description": "Static demo site for the Free Law Project citator.",
+  "description": "Static Citator application derived from the Free Law Project demo.",
   "scripts": {
     "build:data": "uv run python scripts/build_data.py",
+    "build:tokens": "node tools/design-tokens.cjs",
     "build:css": "tailwindcss -i assets/css/styles.css -o _site/assets/css/styles.css --minify",
     "build:eleventy": "eleventy",
     "build": "npm run build:data && npm run build:css && npm run build:eleventy",
@@ -13,7 +14,8 @@
     "dev": "npm run build:data && (npm run dev:css & npm run dev:eleventy)",
     "test": "uv run pytest",
     "lint": "uv run ruff check scripts && uv run ruff format --check scripts && uv run mypy",
-    "clean": "rm -rf _site _data/opinions _data/*.json"
+    "clean": "rm -rf _site _data/opinions _data/*.json",
+    "test:js": "node --test tools/*.test.cjs"
   },
   "devDependencies": {
     "@11ty/eleventy": "^3.0.0",

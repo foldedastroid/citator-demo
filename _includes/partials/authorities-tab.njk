@@ -1,10 +1,6 @@
-{# Authorities tab: one row per case this opinion cites, numbered as in
-   the text. Reads `opinion.cited_authorities` and
-   `opinion.authorities_populated`. The sort dropdown and the filter
-   menu live in macros/list_header.njk; each row carries its rank under
-   every sort key, so the list reorders with CSS `order`. #}
+
 {% from "macros/list_header.njk" import listHeader, listToolbar %}
-{% from "macros/treatment.njk" import severityBadge, validationDot %}
+{% from "macros/treatment.njk" import severityBadge, validationDot, discussion %}
 {% from "macros/evidence.njk" import evidenceCard %}
 {% from "macros/lists.njk" import citeList %}
 {% from "macros/icons.njk" import icon %}
@@ -12,19 +8,19 @@
 <section class="cited-authorities" aria-label="Cited authorities" x-data="authoritiesFilter">
   {% if opinion.cited_authorities | length %}
   {{ listToolbar([
-    {"key": "severity", "label": "Severity"},
-    {"key": "appearance", "label": "Order of Appearance"},
-    {"key": "name", "label": "Case Name"},
-    {"key": "date", "label": "Newest First"},
-    {"key": "mentions", "label": "Depth of Treatment"},
-    {"key": "court", "label": "Court Authority"}
+    {"key": "severity", "label": "Analysis (most negative first)"},
+    {"key": "appearance", "label": "Order of appearance"},
+    {"key": "name", "label": "Case name (A–Z)"},
+    {"key": "date", "label": "Date (newest first)"},
+    {"key": "mentions", "label": "Discussion (deepest first)"},
+    {"key": "court", "label": "Court (highest first)"}
   ], "authorities", "Applied treatment", "Recognized treatment", flags.validation) }}
   {{ listHeader([
     {"label": "Authority", "title": "The cited case, under what this opinion does to it and what it recognizes other courts did"},
     {"label": "Date filed", "class": "col-head--pad", "title": "When the cited case was decided"},
-    {"label": "Depth", "class": "col-head--pad", "title": "How many times this opinion cites the case"}
+    {"label": "Discussion", "class": "col-head--pad", "title": "How many times this opinion cites the case"}
   ]) }}
-  <ol role="list" class="citator-list">
+  <ol role="list" class="citator-list" x-bind:class="listClass">
     {% for a in opinion.cited_authorities %}
     <li
       id="authority-{{ a.n }}"
@@ -40,13 +36,18 @@
       data-name-index="{{ a.name_index }}"
       data-mentions-index="{{ a.mentions_index }}"
       data-court-index="{{ a.court_index }}"
+      data-court-label="{{ a.court_name or 'Court not identified' }}"
+      data-year="{{ (a.date_filed_iso or '').slice(0, 4) }}"
+      data-date="{{ a.date_filed_iso or '' }}"
       x-bind:class="rowClass"
       x-bind:style="rowStyle"
       class="cited-authority sev-rail sev-rail--{{ a.overall_severity | lower }}"
     >
+      <div class="court-group-head" aria-hidden="true">{{ a.court_name or "Court not identified" }}</div>
       {% if a.has_detail %}<details class="authority-row"><summary class="authority-row__summary">{% endif %}
       <div class="citator-row">
-        {# what this opinion does, then what it recognizes other courts did #}
+
+
         <div class="citator-row__treatment">
           <span>
             {{ severityBadge(a.severity, a.treatment_active, false, treatment_definitions[a.treatment_active]) }}
@@ -61,14 +62,14 @@
         </div>
         <div class="cited-authority__body">
           <div class="citator-row__name">
-            {# the name goes to the authority's own page, when the site has one #}
+
+
             {% if a.page_url %}<a href="{{ a.page_url }}" x-on:click.stop class="citator-row__link" title="Open this opinion">{{ a.name }}</a>
             {% else %}<span class="citator-row__title">{{ a.name }}</span>{% endif %}
 
           </div>
-          {# court, status and case number on one line: an authority's
-             citations and the forms it is cited as stay searchable but
-             are not shown #}
+
+
           {% set parts = [] %}
           {% if a.court_name %}{% set parts = (parts.push(a.court_name), parts) %}{% endif %}
           {% if a.status %}{% set parts = (parts.push(a.status), parts) %}{% endif %}
@@ -78,9 +79,11 @@
             {%- if a.docket_numbers | length %}<span class="citator-row__meta-item" data-cite-cell>No. {{ citeList(a.docket_numbers, noun="case number") }}</span>{% endif -%}
           </p>
           {% endif %}
+          {% set lead = a.evidence_cards[0] if a.evidence_cards | length else null %}
+          {% if lead and lead.quote %}<p class="citator-row__excerpt">{{ lead.quote_html | safe }}</p>{% endif %}
         </div>
         <div class="citator-row__date">{{ a.date_filed }}</div>
-        <div class="citator-row__cited" title="{{ a.n_mentions }} mention{% if a.n_mentions != 1 %}s{% endif %} in this opinion">{{ a.n_mentions }}</div>
+        <div class="citator-row__cited">{{ discussion(a.n_mentions, "in this opinion") }}</div>
         {% if a.has_detail %}
         {{ icon("chevron-right", "citator-row__chevron expand-chevron") }}
         {% else %}
@@ -98,6 +101,12 @@
   {% elif opinion.authorities_populated %}
   <p class="tab-empty">This opinion cites no other opinions.</p>
   {% else %}
-  <p class="tab-empty">The authorities cited in this opinion have not been identified yet.</p>
+  <div class="tab-empty">
+    <p class="m-0">The authorities cited in this opinion have not been identified yet.</p>
+    <p class="tab-empty__actions">
+      <a href="#opinion" class="doc-action">Read the opinion</a>
+      {% if opinion.cl_url %}<a href="{{ opinion.cl_url }}" class="doc-action" target="_blank" rel="noopener">Open on CourtListener</a>{% endif %}
+    </p>
+  </div>
   {% endif %}
 </section>

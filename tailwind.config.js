@@ -1,17 +1,21 @@
-/**
- * Tailwind config. The design tokens are CourtListener's
- * (`cl/assets/tailwind/tailwind.config.js`), so the demo renders like the
- * new CourtListener front end; sync them when CourtListener's change.
- */
+
+
+
+
+
+
+
 module.exports = {
   content: [
     "./src/**/*.{njk,md,html}",
     "./_includes/**/*.{njk,md,html}",
-    // classes the Alpine components toggle
+
+
     "./assets/js/**/*.js",
   ],
-  // Class names the templates assemble from data never appear in full
-  // in any file, so they are listed here.
+
+
+
   safelist: [
     "court-option--d0",
     "court-option--d1",
@@ -20,6 +24,7 @@ module.exports = {
     "sev-rail--stop",
     "sev-rail--warning",
     "sev-rail--caution",
+    "sev-rail--positive",
     "sev-rail--neutral",
     "history-move--up",
     "history-move--down",
@@ -27,16 +32,53 @@ module.exports = {
     "sev-toggle--stop",
     "sev-toggle--warning",
     "sev-toggle--caution",
+    "sev-toggle--positive",
     "sev-toggle--neutral",
-    // the case mark inside an evidence quote (model_output.mark_case_in_quote)
+
+
     "evidence-card__case",
-    // the severity marker after a citation (render._severity_marker)
+
+
     "cited-case__severity--stop",
     "cited-case__severity--warning",
     "cited-case__severity--caution",
+    "signal-mark--stop",
+    "signal-mark--warning",
+    "signal-mark--caution",
+    "signal-mark--positive",
+    "signal-mark--neutral",
+    "signal-head--stop",
+    "signal-head--warning",
+    "signal-head--caution",
+    "signal-head--positive",
+    "signal-head--neutral",
+    "meter__segment--stop",
+    "meter__segment--warning",
+    "meter__segment--caution",
+    "meter__segment--positive",
+    "meter__segment--neutral",
+    "summary__status--stop",
+    "summary__status--warning",
+    "summary__status--caution",
+    "summary__status--positive",
+    "summary__status--neutral",
   ],
   theme: {
     extend: {
+
+      zIndex: {
+        raised: "10",
+        sticky: "100",
+        rail: "200",
+        header: "300",
+        scrim: "400",
+        drawer: "500",
+        dialog: "600",
+        popover: "700",
+        menu: "800",
+        toast: "900",
+        tooltip: "1000",
+      },
       screens: {
         xs: "392px",
       },
@@ -59,7 +101,7 @@ module.exports = {
       fontFamily: {
         sans: ["Inter", "sans-serif"],
         cooper: ["Cooper Hewitt", "sans-serif"],
-        mono: ["DM Mono", "mono"],
+        mono: ["DM Mono", "monospace"],
       },
       colors: {
         greyscale: {
@@ -110,6 +152,37 @@ module.exports = {
           400: "#FF692E",
           500: "#E62E05",
         },
+        signal: {
+          stop: "#B23B30",
+          "stop-ink": "#9A3329",
+          "stop-wash": "#F7EBE9",
+          warning: "#C46A1E",
+          "warning-ink": "#94531A",
+          "warning-wash": "#F8EEE4",
+          caution: "#B08A22",
+          "caution-ink": "#7F5F17",
+          "caution-wash": "#F7F1E0",
+          positive: "#4E8150",
+          "positive-ink": "#3B6440",
+          "positive-wash": "#EAF1E8",
+          neutral: "#8D9795",
+          "neutral-ink": "#5F656B",
+          "neutral-wash": "#F1F2F0",
+        },
+        state: {
+          error: "#A23D37",
+          warning: "#856014",
+          success: "#39704D",
+          info: "#3176A6",
+        },
+        line: "#E9EAE7",
+
+        scrim: "rgb(28 24 20 / 13%)",
+
+        "glass-line": "rgb(16 24 40 / 10%)",
+
+        mark: "#EAECE6",
+        "line-pop": "#E0E3E4",
       },
       fontSize: {
         xs: ["12px", "18px"],
@@ -126,9 +199,51 @@ module.exports = {
         "display-md": ["32px", "40px"],
         "display-lg": ["40px", "48px"],
         "display-xl": ["44px", "52px"],
+        "role-title": ["2rem", { lineHeight: "2.5rem", letterSpacing: "-0.8px", fontWeight: "500" }],
+        "role-section": ["1.1875rem", { lineHeight: "1.6875rem", letterSpacing: "-0.42px", fontWeight: "500" }],
+        "role-subheading": ["0.9375rem", { lineHeight: "1.375rem", fontWeight: "500" }],
+        "role-body": ["0.875rem", "1.375rem"],
+        "role-control": ["0.8125rem", "1.25rem"],
+        "role-support": ["0.75rem", "1.125rem"],
+        "role-reading": ["0.9375rem", "1.625rem"],
       },
       maxWidth: {
         content: "948px",
+
+        reading: "46rem",
+      },
+
+      boxShadow: {
+        overlay: "0 3px 8px rgb(23 35 44 / 2%), 0 18px 48px rgb(23 35 44 / 9%)",
+        dialog: "0 3px 8px rgb(23 35 44 / 3%), 0 24px 64px rgb(23 35 44 / 16%)",
+        hover: "0 5px 18px rgb(28 24 20 / 7%)",
+
+        raised: "0 0 0 1px #E0E3E4, 0 1px 3px rgb(23 20 17 / 5%), 0 8px 24px rgb(23 20 17 / 8%)",
+
+        glass: "0 4px 16px rgb(0 0 0 / 12%)",
+      },
+      borderRadius: {
+        flat: "0",
+
+        mark: "2px",
+        control: "4px",
+        popover: "8px",
+        dialog: "12px",
+      },
+      transitionTimingFunction: {
+        DEFAULT: "cubic-bezier(.2,0,0,1)",
+        standard: "cubic-bezier(.2,0,0,1)",
+      },
+      transitionDuration: {
+        DEFAULT: "100ms",
+        feedback: "100ms",
+        popover: "160ms",
+        expansion: "200ms",
+      },
+      minHeight: {
+        target: "1.5rem",
+        control: "2rem",
+        touch: "2.75rem",
       },
     },
   },

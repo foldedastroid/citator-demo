@@ -65,6 +65,23 @@ def test_render_pseudo_markdown_links_scoped_cases() -> None:
     assert "&amp;" in html
 
 
+def test_pseudo_markdown_footnotes() -> None:
+    body, _ = render_body_html(
+        "## I\n\nThe holding.[^1] And more.\n\n[^1]: The note text.",
+        frozenset(),
+    )
+    assert (
+        '<sup class="fnref" id="fnref-1-1"><a href="#fn-1-1">1</a></sup>'
+        in body
+    )
+    assert '<aside class="opinion-footnotes"' in body
+    assert 'id="fn-1-1"' in body and "The note text." in body
+    assert "[^1]" not in body
+    assert excerpt_from_text(
+        "## I\n\nThe holding.[^1] " + LONG + "\n\n[^1]: Note."
+    ).startswith("The holding. ")
+
+
 def test_render_writings_with_groups_links_rows_and_footnotes() -> None:
     doc = [
         {
@@ -100,14 +117,12 @@ def test_render_writings_with_groups_links_rows_and_footnotes() -> None:
     html, sections = render_body_html(doc, frozenset({9}), info)
     assert sections[0]["anchor"] == "section-Opinion-of-the-Court"
     assert html.count('href="#authority-3"') == 2
-    # a group with no row renders as plain text, not a link
     plain, _ = render_body_html(doc, frozenset({9}), {})
     assert 'href="#authority-3"' not in plain
     assert '<span class="cited-case">' in plain
     assert html.count("cited-case__severity--stop") == 2
     assert 'data-tooltip="Stop"' in html
     assert 'data-url="/opinion/9/"' in html
-    # the hover title is the case name alone
     assert "Distinguishes" not in html
     assert '<aside class="opinion-footnotes"' in html
     assert 'href="#fnref-1-1"' in html

@@ -52,7 +52,6 @@ def test_structured_html_blocks_types_and_citations() -> None:
         "heading",
         "blockquote",
     ]
-    # a lower-case continuation is merged into the author line
     assert (
         blocks[0]["html"]
         == "Justice Roberts delivered the opinion of the Court."

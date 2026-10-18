@@ -1,35 +1,135 @@
 ---
 layout: layouts/base.njk
 title: Search
+permalink: "{{ site.home }}"
+panel: Filters
 scripts:
   - /assets/js/alpine/components/search_filter.js
+  - /assets/js/search_suggest.js
+  - /assets/js/expandable.js
 ---
-{# Home page: every opinion as a card, filtered by the rail and the
-   search box (components/search_filter.js), ten to a page. #}
+
+
 {% from "macros/status.njk" import statusRows %}
 {% from "macros/lists.njk" import citeList %}
 {% from "macros/icons.njk" import icon %}
+{% from "macros/treatment.njk" import signal %}
+{% from "macros/pagination.njk" import pagination %}
 
+{% set pageIds = [] %}{% for o in allOpinions %}{% set pageIds = (pageIds.push(o.cluster_id), pageIds) %}{% endfor %}
+{% set anchorCount = scope.anchors or 0 %}
 <div x-data="searchFilter">
-  <h1 class="sr-only">Demo opinions</h1>
+  <div class="page-with-panel">
 
-  <div class="grid gap-6 md:gap-10 md:grid-cols-[220px_minmax(0,1fr)]">
-    <aside aria-label="Filters" class="md:sticky md:top-6 md:self-start">
-      <h2 class="eyebrow">Filters</h2>
+    <div class="min-w-0">
+      <header class="page-head">
+        <h1 class="page-head__title">Search opinions</h1>
+        <p class="page-head__subtitle">Every opinion in the preview, newest first, with how later courts and appeals have treated it.</p>
+      </header>
+      <div class="suggest mb-5" data-suggest>
+        <label for="home-search" class="sr-only">Search by case name or citation</label>
+        {{ icon("search", "search-box__icon") }}
+        <input type="search" id="home-search" class="search-box" placeholder="Search by case name or citation…" autocomplete="off" spellcheck="false"
+               role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="home-suggest"
+               x-bind:value="query" x-on:input.debounce.150ms="setQuery">
+        <div id="home-suggest" class="suggest__list" role="listbox" aria-label="Suggestions" hidden></div>
+      </div>
+      <div class="list-head">
+        <h2 class="list-head__title">Results</h2>
+        <label class="sort-select list-head__sort">
+          <span>Sort by</span>
+          <select class="sort-select__input" x-bind:value="sortKey" x-on:change="setSort">
+            <option value="newest">Date (newest first)</option>
+            <option value="oldest">Date (oldest first)</option>
+            <option value="name">Case name (A–Z)</option>
+            <option value="court">Court (highest first)</option>
+          </select>
+        </label>
+        <button type="button" id="panel-toggle" class="filter-reopen" aria-controls="app-panel" data-panel="Filters"
+                x-bind:aria-expanded="panelExpanded" x-on:click="togglePanel" x-text="filterButtonLabel">Filters</button>
+        <p role="status" aria-live="polite" class="list-head__count">
+          <span x-text="visibleCount">{{ index | length }}</span> of <span x-text="totalCount">{{ index | length }}</span> opinions
+        </p>
+      </div>
+      <ul role="list" class="home-list">
+      {% for case in index %}
+      <li
+        data-court="{{ case.court }}"
+        data-tier="{{ case.tier }}"
+        data-search="{{ case.search_text }}"
+        data-dh-severity="{{ case.summary.dh_severity | lower if case.summary.dh_severity else 'none' }}"
+        data-cr-severity="{{ case.summary.cr_severity | lower if case.summary.cr_severity else 'none' }}"
+        {%- set lvl = [] %}{% for c in courts %}{% if c.key == case.court %}{% set lvl = (lvl.push(c.level), lvl) %}{% endif %}{% endfor %}
+        data-date="{{ case.date_filed }}"
+        data-name="{{ case.case_name | lower }}"
+        data-court-level="{{ lvl[0] if lvl | length else 9 }}"
+        x-show="rowVisible"
+        class="home-row"
+      >
 
-      <div class="filter-group">
-        <label class="inline-flex items-center gap-2 text-sm font-semibold text-greyscale-800">
+
+        <div class="home-card">
+          <div class="min-w-0">
+            {% set worst = case.summary | worstSignal %}
+            <h3 class="home-card__title">
+              <span class="home-card__signal" title="{{ worst or 'No treatment found' }}">{{ signal(worst or "Neutral") }}<span class="sr-only">{{ worst or "No treatment found" }}:</span></span>
+              <a href="/opinion/{{ case.cluster_id }}/" class="home-card__link">{{ case.case_name }}</a>
+              {% if case.tier == "anchor" %}<span class="home-card__anchor" title="One of the {{ anchorCount }} opinions the preview is built around">Anchor</span>{% endif %}
+            </h3>
+            <p class="home-card__cite">{{ case | citeTail }}</p>
+            <dl class="meta-list home-meta">
+              <div><dt>Court</dt><dd>{{ case.court_display }}</dd></div>
+              <div><dt>Date filed</dt><dd>{{ case.date_filed | usdate }}</dd></div>
+              {% if case.docket_numbers | length %}<div><dt>Docket No.</dt><dd data-cite-cell>{{ citeList(case.docket_numbers, noun="case number") }}</dd></div>{% endif %}
+              {% if case.citations | length > 1 %}
+              <div><dt>Parallel citations</dt><dd data-cite-cell>{{ citeList(case.citations, dot=true) }}</dd></div>
+              {% endif %}
+            </dl>
+          </div>
+          {{ statusRows(case.status, false, treatment_definitions, "", true, "/opinion/" ~ case.cluster_id ~ "/#cited-by", pageIds) }}
+          {% if case.excerpt %}
+          <div class="home-excerpt" data-expand data-lines="2">
+            <div class="home-snippet">
+              <div class="expand__body" id="excerpt-{{ case.cluster_id }}"><p class="expand__inner">{{ case.excerpt }}</p></div>
+            </div>
+            <button type="button" class="home-snippet__more" aria-expanded="false" aria-controls="excerpt-{{ case.cluster_id }}" hidden>Show more</button>
+          </div>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+      </ul>
+      <div class="empty-state" x-show="noResults" x-cloak role="status">
+        <p class="empty-state__title">No opinions match these filters</p>
+        <p class="empty-state__text">Clear them to see every opinion in the preview.</p>
+        <button type="button" class="doc-action" x-on:click="clearAllFilters">Clear all filters</button>
+      </div>
+      {{ pagination() }}
+    </div>
+
+    <aside id="app-panel" class="app-panel app-panel--filters" aria-labelledby="filters-title">
+      <header class="app-panel__header">
+        <h2 id="filters-title" class="app-panel__title">Filters</h2>
+        <button type="button" id="panel-collapse" class="pane-toggle" aria-controls="app-panel"
+                x-bind:aria-expanded="panelExpanded" x-bind:aria-label="panelLabel" x-bind:title="panelLabel" x-on:click="togglePanel">
+          {{ icon("panel-right", "w-[18px] h-[18px]") }}
+        </button>
+      </header>
+      <div class="app-panel__inner">
+
+      <div class="filter-group filter-group--first">
+        <label class="filter-check">
           <input type="checkbox" class="checkbox" checked data-filter="filterAnchorsOnly" x-bind:checked="filterChecked" x-on:change="setAnchorsOnly">
           Anchor opinions only
         </label>
-        <p class="mt-1 text-xs text-greyscale-500">The ten opinions the preview is built around; every other opinion here is one they cite or that cites them.</p>
+        <p class="filter-help">The {{ anchorCount }} opinion{{ "s" if anchorCount != 1 }} the preview is built around; every other opinion here is one they cite or that cites them.</p>
       </div>
 
       <div class="filter-group">
         <span class="filter-group__title">Court</span>
         <button type="button" class="court-open" x-on:click="openPicker">
           <span x-text="courtSummary">All courts</span>
-          {{ icon("chevron-down-small", "w-4 h-4 text-greyscale-400") }}
+          {{ icon("chevron-down-small", "w-4 h-4 text-greyscale-500") }}
         </button>
         <div class="court-chips" x-show="hasSelectedCourts" x-cloak>
           {% for tab in court_picker %}{% for group in tab.groups %}{% for c in group.courts %}
@@ -45,10 +145,8 @@ scripts:
 
       <div class="filter-group">
         <span class="filter-group__title">Severity</span>
-        {# one list of toggles per question (how later courts treat it,
-           what happened on appeal; the cards' order), the two side by
-           side, most severe at the top, each naming its tier; the group
-           names the question #}
+
+
         <div class="sev-groups">
         {% for direction in [
           {"label": "Later courts", "prefix": "filterCr"},
@@ -57,11 +155,13 @@ scripts:
         <div class="sev-group" role="group" aria-label="{{ direction.label }} severity">
           <p class="sev-group__title">{{ direction.label }}</p>
           <div class="sev-list">
-            {% for tier in ["Stop", "Warning", "Caution", "Neutral"] %}
+            {% for tier in ["Stop", "Warning", "Caution", "Positive", "Neutral"] %}
             <button type="button" role="checkbox" class="sev-toggle sev-toggle--{{ tier | lower }}" data-filter="{{ direction.prefix }}{{ tier }}"
                     x-bind:aria-checked="filterOn" x-bind:class="filterClass" x-on:click="toggleFilter">
               <span class="sev-toggle__dot" aria-hidden="true">{{ icon("severity-" ~ (tier | lower), "sev-toggle__icon") }}</span>
               <span class="sev-toggle__label">{{ tier }}</span>
+              <span class="sev-toggle__count" aria-hidden="true" x-text="filterCount"></span>
+              <span class="sr-only" x-text="filterCountLabel"></span>
             </button>
             {% endfor %}
           </div>
@@ -71,71 +171,16 @@ scripts:
         <button type="button" class="severity-clear" x-on:click="clearSeverityFilters" x-show="hasSeverityFilters" x-cloak>Clear severity filters</button>
       </div>
 
-      <p role="status" aria-live="polite" class="filter-group text-xs text-greyscale-500">
-        <span x-text="visibleCount">{{ index | length }}</span> of <span x-text="totalCount">{{ index | length }}</span> opinions
-      </p>
+      </div>
     </aside>
-
-    <div>
-      <label class="block mb-6">
-        <span class="sr-only">Search by case name or citation</span>
-        <span class="relative block">
-          {{ icon("search", "search-box__icon") }}
-          <input type="search" class="search-box" placeholder="Search by case name or citation…"
-                 x-bind:value="query" x-on:input.debounce.150ms="setQuery">
-        </span>
-      </label>
-      <ul role="list" class="home-list">
-      {% for case in index %}
-      <li
-        data-court="{{ case.court }}"
-        data-tier="{{ case.tier }}"
-        data-search="{{ case.search_text }}"
-        data-dh-severity="{{ case.summary.dh_severity | lower if case.summary.dh_severity else 'none' }}"
-        data-cr-severity="{{ case.summary.cr_severity | lower if case.summary.cr_severity else 'none' }}"
-        x-show="rowVisible"
-        class="home-row"
-      >
-        {# the name's link covers the whole card; the links in the status
-           rows sit above it #}
-        <div class="home-card">
-          <div class="min-w-0">
-            <h3 class="text-xl font-semibold leading-tight">
-              <a href="/opinion/{{ case.cluster_id }}/" class="home-card__link">{{ case.case_name }}</a>
-              {% if case.tier == "anchor" %}<span class="home-card__anchor" title="One of the ten opinions the preview is built around">Anchor</span>{% endif %}
-            </h3>
-            <dl class="meta-list home-meta">
-              <div><dt>Court</dt><dd>{{ case.court_display }}</dd></div>
-              <div><dt>Date filed</dt><dd>{{ case.date_filed | usdate }}</dd></div>
-              {% if case.docket_numbers | length %}<div><dt>Case Number</dt><dd data-cite-cell>{{ citeList(case.docket_numbers, noun="case number") }}</dd></div>{% endif %}
-              {% if case.citations | length %}
-              <div><dt>Citations</dt><dd data-cite-cell>{{ citeList(case.citations, dot=true) }}</dd></div>
-              {% endif %}
-            </dl>
-          </div>
-          {{ statusRows(case.status, false, treatment_definitions, "", true, "/opinion/" ~ case.cluster_id ~ "/#cited-by") }}
-          {% if case.excerpt %}
-          <p class="home-snippet">{{ case.excerpt }}</p>
-          {% endif %}
-        </div>
-      </li>
-      {% endfor %}
-      </ul>
-      <nav class="home-pager" aria-label="Pages" x-show="hasPages">
-        <button type="button" x-on:click="prevPage" x-bind:disabled="atFirstPage" class="home-pager__btn">Previous</button>
-        <span class="home-pager__label" x-text="pageLabel"></span>
-        <button type="button" x-on:click="nextPage" x-bind:disabled="atLastPage" class="home-pager__btn">Next</button>
-      </nav>
-    </div>
   </div>
 
-  {# Court picker: a tab per jurisdiction and level; inside a tab the
-     courts are grouped by state, that state's highest court first. #}
-  <div class="court-modal" x-show="pickerOpen" x-cloak x-on:keydown.escape.window="closePicker">
+
+  <div class="court-modal" x-show="pickerOpen" x-cloak x-on:keydown.escape.stop.prevent="closePicker">
     <div class="court-modal__backdrop" x-on:click="closePicker"></div>
-    <div class="court-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="court-picker-title">
+    <div class="court-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="court-picker-title" x-on:keydown="trapPicker">
       <div class="court-modal__head">
-        <h2 id="court-picker-title" class="text-lg font-semibold text-greyscale-900">Select courts</h2>
+        <h2 id="court-picker-title" class="court-modal__title">Select courts</h2>
         <button type="button" class="court-modal__close" x-on:click="closePicker" aria-label="Close">
           {{ icon("close", "w-5 h-5") }}
         </button>
@@ -197,7 +242,7 @@ scripts:
       </div>
 
       <div class="court-modal__foot">
-        <span class="text-sm text-greyscale-600"><span x-text="courtSummary">All courts</span> <span class="cite-list__dot" aria-hidden="true">·</span> <span x-text="visibleCount"></span> opinions</span>
+        <span class="text-sm text-greyscale-500"><span x-text="courtSummary">All courts</span> <span class="cite-list__dot" aria-hidden="true">·</span> <span x-text="visibleCount"></span> opinions</span>
         <button type="button" class="court-done" x-on:click="closePicker">Done</button>
       </div>
     </div>

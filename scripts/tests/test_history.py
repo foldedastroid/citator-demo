@@ -16,7 +16,6 @@ def test_every_opinion_in_a_chain_draws_the_same_graph(
     assert names[0] == names[1] == names[2]
     g = graphs[1]
     assert g["n_opinions"] == 3
-    # highest court in the rightmost column, newest decision on the top row
     by_name = {s["case_name"] + s["court"]: s for s in g["chain"]}
     scotus = by_name["Jones v. SmithSupreme Court of the United States"]
     assert scotus["col"] == max(s["col"] for s in g["chain"])
@@ -28,18 +27,13 @@ def test_every_opinion_in_a_chain_draws_the_same_graph(
         "Highest court",
     ]
     assert scotus["tier"] == "Highest court"
-    # the connector comes from the decision before it in time: an elbow in
-    # the connector row, climbing to the right
     link = scotus["links"][0]
     assert (link["dir"], link["row"], link["span"]) == ("up", 2, 2)
     oldest = next(s for s in g["chain"] if s["cluster_id"] == 1)
     assert oldest["links"] == []
-    # the reversal is recorded, so the California report of it adds no card
     assert g["has_reported"] is False
     self_step = next(s for s in g["chain"] if s["role"] == "self")
     assert self_step["cluster_id"] == 2
-    # every card says what that decision did, in the active voice; the
-    # definition shown is the page's own on its card, the past form elsewhere
     own = self_step["acts"][0]["treatments"][0]
     assert (own["treatment"], own["defined_as"]) == ("Affirms", "Affirms")
     others = [
@@ -67,14 +61,11 @@ def test_decision_below_reads_the_disposition_as_the_status_row_does(
     source = DataSource(**{**chain_source.__dict__, "opinions": opinions})
     graph = SiteBuilder(source).history.graph(1)
     own = next(s for s in graph["chain"] if s["role"] == "self")
-    # an order with no label carries the court's own sentence
     assert [
         (t["treatment"], t["text"])
         for a in own["acts"]
         for t in a["treatments"]
     ] == [("Ordered", "Motion denied.")]
-    # with nothing recorded, an unnamed decision below is drawn with no
-    # name and the link carries no pill
     opinions[0]["disposition"] = {"label": "None", "text": ""}
     opinions[0]["on_appeal"] = [{"court": "Magistrate"}]
     source = DataSource(**{**chain_source.__dict__, "opinions": opinions})
@@ -88,9 +79,6 @@ def test_decision_below_reads_the_disposition_as_the_status_row_does(
 def test_decision_below_sits_under_the_court_that_reviewed_it(
     chain_source: DataSource,
 ) -> None:
-    # the trial court decision (1) names the decision it reviewed; seen
-    # from the Supreme Court opinion (3) that decision must still sit one
-    # level under the trial court, not one level under the Supreme Court
     opinions = [dict(op) for op in chain_source.opinions]
     opinions[0]["on_appeal"] = [
         {"court": "Magistrate", "name": "Smith v. Jones"}

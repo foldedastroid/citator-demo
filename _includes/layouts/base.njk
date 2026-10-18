@@ -1,4 +1,6 @@
 {% from "macros/icons.njk" import icon %}
+{% from "macros/sidebar.njk" import caseNode %}
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -8,69 +10,225 @@
     <meta name="description" content="An open-source citator preview from Free Law Project. Every treatment is read from the opinions themselves and shown with the passage behind it.">
     <title>{{ title or "Citator Demo" }} — Free Law Project</title>
     <link rel="stylesheet" href="/assets/css/styles.css?v={{ build.stamp }}">
-    {# Component scripts must precede alpine.min.js: the bundle calls
-       Alpine.start() synchronously, so an alpine:init listener registered
-       after it never fires. #}
+
+    <script src="/assets/js/shell_state.js?v={{ build.stamp }}"></script>
+
+
     <script defer src="/assets/js/alpine/composables/highlight.js?v={{ build.stamp }}"></script>
     <script defer src="/assets/js/alpine/composables/list_toggle.js?v={{ build.stamp }}"></script>
+    <script defer src="/assets/js/alpine/components/app_shell.js?v={{ build.stamp }}"></script>
     <script defer src="/assets/js/alpine/components/about_hint.js?v={{ build.stamp }}"></script>
+    <script defer src="/assets/js/alpine/components/help_menu.js?v={{ build.stamp }}"></script>
     <script defer src="/assets/js/same_page_links.js?v={{ build.stamp }}"></script>
+    <script defer src="/assets/js/sidebar_tree.js?v={{ build.stamp }}"></script>
+    <script defer src="/assets/js/shortcuts.js?v={{ build.stamp }}"></script>
+    <script defer src="/assets/js/toast.js?v={{ build.stamp }}"></script>
+    <script defer src="/assets/js/tooltips.js?v={{ build.stamp }}"></script>
+    <script defer src="/assets/js/text_signals.js?v={{ build.stamp }}"></script>
+    <script defer src="/assets/js/cite_cta.js?v={{ build.stamp }}"></script>
     <script defer src="/assets/js/cite_fit.js?v={{ build.stamp }}"></script>
     {% for s in scripts %}
     <script defer src="{{ s }}?v={{ build.stamp }}"></script>
     {% endfor %}
     <script defer src="/assets/js/alpine.min.js?v={{ build.stamp }}"></script>
   </head>
-  <body class="min-h-screen flex flex-col">
+  <body x-data="appShell"{% if panel == "Filters" %} class="has-filter-panel"{% elif articleLayout %} class="has-article"{% endif %}>
 
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <a href="#footer" class="skip-link">Skip to footer</a>
 
-    <header class="site-header">
-      <div class="capped-width px-4 md:px-10 py-4 flex items-center justify-between gap-4">
-        <a href="/" class="site-header__wordmark">Citator preview</a>
-        <nav class="flex items-center gap-2" aria-label="Site">
-          <div x-data="aboutHint" class="about-hint">
-            {% if page.url != "/about/" %}
-            <a href="/about/" class="site-header__link" x-bind:class="hintLinkClass" x-on:click="dismiss">
-              {{ icon("info", "w-4 h-4") }}
-              About this citator
+    <div class="app-shell">
+
+      <aside id="app-sidebar" class="app-sidebar" aria-label="Site" x-on:click="onSidebarClick"
+             x-on:touchstart.passive="onSidebarTouchStart" x-on:touchmove.passive="onSidebarTouchMove" x-on:touchend="onSidebarTouchEnd">
+        <button type="button" class="app-sidebar__rail" tabindex="-1" aria-hidden="true" title="Hide sidebar (⌘\)" x-on:click.stop="toggleSidebar"></button>
+        <header class="app-sidebar__header">
+          <a href="{{ site.home }}" class="app-wordmark" title="Return to Search opinions">
+            <span class="app-wordmark__org">Free Law Project</span>
+            <span class="app-wordmark__name">Citator preview</span>
+          </a>
+          <button type="button" id="sidebar-collapse" class="pane-toggle" aria-controls="app-sidebar"
+                  x-bind:aria-expanded="sidebarExpanded" x-bind:aria-label="sidebarLabel" x-bind:title="sidebarLabel" x-on:click="toggleSidebar">
+            {{ icon("sidebar", "w-[18px] h-[18px]") }}
+          </button>
+        </header>
+        <div class="app-sidebar__inner">
+          <label class="tree-filter">
+            <span class="sr-only">Filter the library</span>
+            {{ icon("search", "tree-filter__icon") }}
+            <input type="search" id="tree-filter" placeholder="Filter library" autocomplete="off">
+          </label>
+
+          {% set counts = allOpinions | listCounts %}
+          {% set anchors = [] %}{% for c in index %}{% if c.tier == "anchor" %}{% set anchors = (anchors.push(c), anchors) %}{% endif %}{% endfor %}
+          <section class="tree-section" aria-labelledby="tree-research">
+            <h2 id="tree-research" class="tree-section__title">Research</h2>
+            <a href="{{ site.home }}" class="tree-row tree-row--plain">
+              {{ icon("search", "tree-icon") }}<span class="tree-label">Search opinions</span>
             </a>
-            <div x-show="open" x-cloak class="about-hint__bubble" role="note">
-              <span>New here? Start with what the preview is and how to read it.</span>
-              <button type="button" class="about-hint__close" x-on:click="dismiss" aria-label="Dismiss">
-                {{ icon("close", "w-3.5 h-3.5") }}
-              </button>
+          </section>
+
+          <section class="tree-section" id="tree-recent" aria-labelledby="tree-recent-title" hidden>
+            <div class="tree-section__title-row">
+              <h2 id="tree-recent-title" class="tree-section__title">Recent</h2>
+              <button type="button" class="tree-section__action" data-recent-clear>Clear</button>
             </div>
+            <ul role="list" class="tree" id="tree-recent-list"></ul>
+          </section>
+
+          <section class="tree-section" aria-labelledby="tree-library">
+            <h2 id="tree-library" class="tree-section__title">Library</h2>
+            <ul role="list" class="tree">
+              {% set groups = [{"key": "anchors", "label": "Anchor opinions", "href": site.home ~ "?anchors=1", "icon": "document", "cases": anchors}] %}
+              {% for tab in court_picker %}
+                {% set keys = [] %}{% for g in tab.groups %}{% for c in g.courts %}{% set keys = (keys.push(c.key), keys) %}{% endfor %}{% endfor %}
+                {% set hits = [] %}{% for c in index %}{% if c.court in keys %}{% set hits = (hits.push(c), hits) %}{% endif %}{% endfor %}
+                {% set groups = (groups.push({"key": tab.key, "label": tab.display, "href": site.home ~ "?anchors=0&courts=" ~ (keys | join(",")), "icon": "court", "cases": hits}), groups) %}
+              {% endfor %}
+              {% for g in groups %}
+              {% set inside = [] %}{% for c in g.cases %}{% if page.url == "/opinion/" ~ c.cluster_id ~ "/" and (g.key == "anchors" or c.tier != "anchor") %}{% set inside = (inside.push(c), inside) %}{% endif %}{% endfor %}
+              {% set open = (inside | length) or (g.key == "anchors" and page.url == site.home) %}
+              <li class="tree-group">
+                <div class="tree-row">
+                  <a href="{{ g.href }}" class="tree-link" data-library-link="{{ g.key }}">
+                    {{ icon(g.icon, "tree-icon") }}<span class="tree-label">{{ g.label }}</span><span class="tree-badge">{{ g.cases | length }}</span>
+                  </a>
+                  <button type="button" class="tree-toggle" data-tree-toggle data-tree-key="group-{{ g.key }}"{% if inside | length %} data-tree-here="true"{% endif %}
+                          aria-expanded="{{ 'true' if open else 'false' }}" aria-controls="tree-group-{{ g.key }}" aria-label="Show {{ g.label | lower }}">
+                    {{ icon("chevron-right", "tree-chevron") }}
+                  </button>
+                </div>
+                <ul role="list" class="tree-sub tree-sub--cases" id="tree-group-{{ g.key }}"{% if not open %} hidden{% endif %}>
+                  {% set shown = [] %}
+                  {% for c in g.cases %}{% if c.tier == "anchor" or page.url == "/opinion/" ~ c.cluster_id ~ "/" %}{% set shown = (shown.push(c), shown) %}{% endif %}{% endfor %}
+                  {% for c in g.cases %}{% if c.tier != "anchor" and page.url != "/opinion/" ~ c.cluster_id ~ "/" and shown | length < 8 %}{% set shown = (shown.push(c), shown) %}{% endif %}{% endfor %}
+                  {% for c in shown %}{% if loop.index <= 8 or page.url == "/opinion/" ~ c.cluster_id ~ "/" %}{{ caseNode(c, g.key, page.url, counts, inside | length) }}{% endif %}{% else %}<li class="tree-empty">No opinions in this preview</li>{% endfor %}
+                  {% if g.cases | length > 8 %}<li><a href="{{ g.href }}" class="tree-subrow tree-more">All {{ g.cases | length }} in search {{ icon("arrow-right", "w-3 h-3") }}</a></li>{% endif %}
+                </ul>
+              </li>
+              {% endfor %}
+              <li>
+                <a href="{{ site.home }}?anchors=0" class="tree-row tree-row--plain" data-library-link="all">
+                  {{ icon("list", "tree-icon") }}<span class="tree-label">All opinions</span><span class="tree-badge">{{ index | length }}</span>
+                </a>
+              </li>
+            </ul>
+            <p class="tree-empty" id="tree-no-match" hidden>No opinion matches that filter.</p>
+          </section>
+
+          <section class="tree-section" aria-labelledby="tree-guide">
+            <h2 id="tree-guide" class="tree-section__title">Guide</h2>
+            <a href="/about/#signals" class="tree-row tree-row--plain">
+              {{ icon("severity-caution", "tree-icon") }}<span class="tree-label">Reading a signal</span>
+            </a>
+            <a href="/about/#feedback" class="tree-row tree-row--plain">
+              {{ icon("chat", "tree-icon") }}<span class="tree-label">Share feedback</span>
+            </a>
+          </section>
+        </div>
+
+        <nav class="app-sidebar__footer" aria-label="About and project links">
+          <a href="/about/" class="app-sidebar__about"{% if page.url == "/about/" %} aria-current="page"{% endif %}>{{ icon("info", "w-3.5 h-3.5") }}<span>About this citator</span></a>
+          <div class="app-sidebar__external"><a href="https://www.courtlistener.com/" target="_blank" rel="noopener">CourtListener {{ icon("external", "w-3 h-3") }}</a><a href="https://free.law/" target="_blank" rel="noopener">Free Law Project {{ icon("external", "w-3 h-3") }}</a></div>
+        </nav>
+      </aside>
+
+      <div class="app-main">
+
+        <header class="app-topbar">
+          <button type="button" id="sidebar-toggle" class="pane-toggle sidebar-reopen" aria-controls="app-sidebar"
+                  x-bind:aria-expanded="sidebarExpanded" x-bind:aria-label="sidebarLabel" x-bind:title="sidebarLabel"
+                  x-on:click="toggleSidebar" aria-label="Show sidebar">
+            {{ icon("sidebar", "w-[18px] h-[18px]") }}
+          </button>
+
+          {% if panel and panelSide == "left" %}
+          <button type="button" id="panel-toggle" class="pane-toggle" aria-controls="app-panel" data-panel="{{ panel }}"
+                  x-bind:aria-expanded="panelExpanded" x-bind:aria-label="panelLabel" x-bind:title="panelLabel"
+                  x-on:click="togglePanel" aria-label="Hide {{ panel | lower }}">
+            {{ icon("outline", "w-[18px] h-[18px]") }}
+          </button>
+          {% endif %}
+
+          <nav class="app-crumbs" aria-label="Breadcrumb">
+            {% if page.url == site.home %}
+            <span class="app-crumbs__current" aria-current="page">Search opinions</span>
+            {% else %}
+            <a href="{{ site.home }}" class="app-crumbs__link">Search opinions</a>
+            <span class="app-crumbs__sep" aria-hidden="true">/</span>
+            <span class="app-crumbs__current" aria-current="page">{{ "Opinion" if opinion else title }}</span>
+            {% endif %}
+          </nav>
+
+          <div class="app-topbar__end">
+            <a href="{{ site.feedback }}" class="feedback-link" target="_blank" rel="noopener">Share feedback {{ icon("external", "w-3 h-3") }}</a>
+            <div x-data="aboutHint" class="about-hint">
+              <div x-data="helpMenu" class="help-menu" x-on:keydown="onHelpKeydown" x-on:click.outside="helpClickOutside">
+                <button type="button" id="help-button" class="pane-toggle" x-ref="helpButton"
+                        aria-haspopup="menu" aria-controls="help-menu" x-bind:aria-expanded="helpExpanded"
+                        x-bind:class="hintLinkClass" x-on:click="toggleHelp" aria-expanded="false" aria-label="Help" title="Help">
+                  {{ icon("info", "w-[18px] h-[18px]") }}
+                </button>
+                <div id="help-menu" class="help-menu__panel" role="menu" aria-label="Help" x-bind:class="helpClass">
+                  <p class="help-menu__label" aria-hidden="true">Need help?</p>
+                  <a href="/about/" class="help-menu__item" role="menuitem" tabindex="-1">{{ icon("book", "help-menu__icon") }}About this citator</a>
+                  <a href="/about/#signals" class="help-menu__item" role="menuitem" tabindex="-1">{{ icon("severity-caution", "help-menu__icon") }}Reading a signal</a>
+                  <button type="button" class="help-menu__item" role="menuitem" tabindex="-1" x-on:click="openShortcuts">{{ icon("keyboard", "help-menu__icon") }}Keyboard shortcuts<kbd class="help-menu__kbd">?</kbd></button>
+                  <a href="/about/#feedback" class="help-menu__item" role="menuitem" tabindex="-1">{{ icon("chat", "help-menu__icon") }}Share feedback</a>
+                </div>
+              </div>
+              {% if page.url != "/about/" %}
+              <div x-show="open" x-cloak class="about-hint__bubble" role="note">
+                <p class="about-hint__text"><strong>New here?</strong> Help explains what the preview is and how to read it.</p>
+                <button type="button" class="about-hint__close" x-on:click="dismiss" aria-label="Dismiss">
+                  {{ icon("close", "w-3.5 h-3.5") }}
+                </button>
+              </div>
+              {% endif %}
+            </div>
+            {% if panel and panelSide != "left" and panel != "Filters" %}
+            <span class="app-topbar__rule" aria-hidden="true"></span>
+            <button type="button" id="panel-toggle" class="pane-toggle" aria-controls="app-panel" data-panel="{{ panel }}"
+                    x-bind:aria-expanded="panelExpanded" x-bind:aria-label="panelLabel" x-bind:title="panelLabel"
+                    x-on:click="togglePanel" aria-label="Hide {{ panel | lower }}">
+              {{ icon("panel-right", "w-[18px] h-[18px]") }}
+            </button>
             {% endif %}
           </div>
-          <a href="/about/#feedback" class="site-header__cta">
-            {{ icon("chat", "w-4 h-4") }}
-            Share feedback
-          </a>
-        </nav>
+        </header>
+
+        <p class="desktop-notice" role="note">
+          For the best experience, use a desktop.
+        </p>
+
+        <main id="main-content" class="app-content">
+          {{ content | safe }}
+        </main>
+
+        <footer id="footer" class="app-footer">
+          <span>Generated {{ build.date | usdate }}</span>
+          <span aria-hidden="true">·</span>
+          <span>Open-source citator preview</span>
+          <span class="app-footer__end">
+            <a href="/about/" class="app-footer__link">About this citator</a>
+            <span aria-hidden="true">·</span>
+            <a href="https://free.law/" class="app-footer__link" target="_blank" rel="noopener">Free Law Project</a>
+          </span>
+        </footer>
       </div>
-    </header>
+    </div>
 
-    <p class="desktop-notice md:hidden" role="note">
-      For the best experience, use a desktop.
-    </p>
+    <script type="application/json" id="opinion-index" data-src="/assets/opinions.json?v={{ build.stamp }}"></script>
 
-    <main id="main-content" class="capped-width px-4 md:px-10 py-6 flex-1">
-      {{ content | safe }}
-    </main>
-
-    <footer id="footer" class="site-footer">
-      <div class="capped-width px-4 md:px-10 py-6 flex flex-wrap items-center gap-2">
-        <span>Generated {{ build.date | usdate }}</span>
-        <span aria-hidden="true">·</span>
-        <span>Open-source citator preview</span>
-        <span aria-hidden="true">·</span>
-        <a href="/about/" class="links">About this citator</a>
-        <span aria-hidden="true">·</span>
-        <a href="https://free.law/" class="links" target="_blank" rel="noopener">Free Law Project</a>
-      </div>
-    </footer>
-
+    {% include "partials/shortcuts-sheet.njk" %}
+    <template id="signal-glyphs">
+      <span data-glyph="stop">{{ icon("severity-stop", "signal-mark signal-mark--stop") }}</span>
+      <span data-glyph="warning">{{ icon("severity-warning", "signal-mark signal-mark--warning") }}</span>
+      <span data-glyph="caution">{{ icon("severity-caution", "signal-mark signal-mark--caution") }}</span>
+      <span data-glyph="positive">{{ icon("severity-positive", "signal-mark signal-mark--positive") }}</span>
+      <span data-glyph="neutral">{{ icon("severity-neutral", "signal-mark signal-mark--neutral") }}</span>
+      <span data-glyph="search">{{ icon("search", "suggest__glyph") }}</span>
+    </template>
+    <div class="app-scrim" x-show="scrimVisible" x-cloak x-on:click="closeDrawer" aria-hidden="true"></div>
   </body>
 </html>

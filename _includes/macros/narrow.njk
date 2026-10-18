@@ -1,0 +1,48 @@
+
+{% from "macros/icons.njk" import icon %}
+{% from "macros/treatment.njk" import signal %}
+
+{% macro narrowRow(href, attrs, label, n, mark="") %}
+<li>
+  {% if n %}<a href="{{ href }}" {{ attrs | safe }} data-narrow-facet class="narrow__row" x-bind:class="narrowItemClass" x-bind:aria-current="narrowItemCurrent">
+  {%- else %}<span class="narrow__row narrow__row--empty">{% endif %}
+    <span class="narrow__label">{{ mark | safe }}<span class="narrow__text">{{ label }}</span></span>
+    <span class="narrow__n">{{ n }}</span>
+  {%- if n %}</a>{% else %}</span>{% endif %}
+</li>
+{% endmacro %}
+
+{% macro narrowView(b, href, noun, empty) %}
+<section class="narrow" x-data="narrowPanel" data-list="{{ b.list }}" aria-labelledby="narrow-{{ b.list }}-title">
+  <h2 id="narrow-{{ b.list }}-title" class="summary__title">Narrow by</h2>
+  {% if b.rows | length %}
+  <a href="{{ href }}" data-narrow="" data-narrow-court="" data-narrow-year="" class="narrow__row narrow__row--all" x-bind:class="narrowItemClass" x-bind:aria-current="narrowItemCurrent">
+    <span class="narrow__label"><span class="narrow__text">All {{ noun }}</span></span>
+    <span class="narrow__n">{{ b.rows | length }}</span>
+  </a>
+  <section class="narrow__group" aria-labelledby="narrow-{{ b.list }}-signal">
+    <h3 id="narrow-{{ b.list }}-signal" class="narrow__title">Signal</h3>
+    <ul role="list" class="narrow__rows">
+      {% for p in b.tiers %}{{ narrowRow(href, 'data-narrow="' ~ (p.tier | lower) ~ '"', p.tier, p.n, signal(p.tier, "narrow__mark")) }}{% endfor %}
+    </ul>
+  </section>
+  <section class="narrow__group" aria-labelledby="narrow-{{ b.list }}-court">
+    <h3 id="narrow-{{ b.list }}-court" class="narrow__title">Court</h3>
+    <ul role="list" class="narrow__rows">
+      {% for c in b.courts %}{{ narrowRow(href, 'data-narrow-court="' ~ (c.key | escape) ~ '"', c.label, c.n) }}{% endfor %}
+    </ul>
+  </section>
+  {% if b.periods | length %}
+  <section class="narrow__group" aria-labelledby="narrow-{{ b.list }}-date">
+    <h3 id="narrow-{{ b.list }}-date" class="narrow__title">{{ b.periodUnit or ("Decade" if b.decades else "Year") }}</h3>
+    <ul role="list" class="narrow__rows">
+      {% for y in b.periods | reverse %}{{ narrowRow(href, 'data-narrow-year="' ~ y.key ~ '"', y.label, y.n) }}{% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+  {% else %}
+  <p class="meter__empty">{{ empty }}</p>
+  {% endif %}
+  <button type="button" class="panel-view__link" x-on:click="showPanelSummary">Citator summary {{ icon("arrow-right", "w-[13px] h-[13px]") }}</button>
+</section>
+{% endmacro %}

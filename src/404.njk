@@ -1,0 +1,25 @@
+---
+layout: layouts/base.njk
+title: Not in this preview
+permalink: /404.html
+eleventyExcludeFromCollections: true
+scripts:
+  - /assets/js/not_found.js
+---
+
+{% from "macros/icons.njk" import icon %}
+<div class="not-found">
+  <p class="not-found__code">Not in this preview</p>
+  <h1 class="m-0">This page isn't part of the preview</h1>
+  <p class="not-found__text" data-not-found-opinion hidden>
+    The preview holds a small collection of opinions. This opinion has no page here.
+  </p>
+  <p class="not-found__text" data-not-found-other>
+    The address may be mistyped, or the page may have moved.
+  </p>
+  <div class="not-found__actions">
+    <a href="{{ site.home }}" class="start-panel__button">{{ icon("search", "w-4 h-4") }}Search opinions</a>
+    <a href="#" class="doc-action" data-not-found-cl hidden target="_blank" rel="noopener">{{ icon("external", "w-3.5 h-3.5") }}Open this opinion on CourtListener</a>
+    <a href="/about/" class="doc-action">About this citator</a>
+  </div>
+</div>

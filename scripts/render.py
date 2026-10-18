@@ -18,11 +18,12 @@ from cl_html import document_plain_paragraphs
 from taxonomy import NEGATIVE_TIERS
 
 SECTION_RE = re.compile(r"^##\s+(.+?)\s*$", re.MULTILINE)
-# <citedCase data-group="N" data-cluster-id="X" data-case="Y" data-manual="1">
-# label</citedCase>, every attribute optional (see cl_html.cited_case_tag).
 CITED_CASE_RE = re.compile(r"<citedCase([^>]*)>(.+?)</citedCase>")
+FOOTNOTE_DEF_RE = re.compile(
+    r"^\[\^([A-Za-z0-9]+)\]:[ \t]*(.+?)\s*$", re.MULTILINE
+)
+FOOTNOTE_REF_RE = re.compile(r"\[\^([A-Za-z0-9]+)\]")
 _ATTR_RE = re.compile(r'([a-z-]+)="([^"]*)"')
-# Counsel-appearance paragraphs from a PDF caption: never a useful excerpt.
 COUNSEL_BLOCK_RE = re.compile(
     r"\bAttorneys? for\b|\b(?:LLP|LLC|PLLC|P\.\s?C\.)\b.*\b(?:Suite|Street|Avenue|Road)\b",
     re.S,
@@ -32,7 +33,6 @@ INLINE_TAGS = frozenset(
 )
 _TAG_RE = re.compile(r"<(/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*?)(/?)>")
 
-# block type → (tag, class)
 BLOCK_TAG: dict[str, tuple[str, str]] = {
     "paragraph": ("p", ""),
     "blockquote": ("blockquote", ""),
@@ -57,6 +57,8 @@ def excerpt_from_text(
     if isinstance(document_text, str):
         text = SECTION_RE.sub("", document_text)
         text = CITED_CASE_RE.sub(r"\2", text)
+        text = FOOTNOTE_DEF_RE.sub("", text)
+        text = FOOTNOTE_REF_RE.sub("", text)
         paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
     else:
         paragraphs = document_plain_paragraphs(document_text)
@@ -105,7 +107,6 @@ def balance_inline(html: str) -> str:
             stack.pop()
             out.append(m.group(0))
         elif tag in stack:
-            # interleaved (<em><a></em></a>): close the inner tags first
             while stack[-1] != tag:
                 out.append(f"</{stack.pop()}>")
             stack.pop()
@@ -171,7 +172,6 @@ class CitationLinker:
     ) -> str:
         info = (self.group_info or {}).get(n)
         if info is None:
-            # no Authorities row for this group (the opinion citing itself)
             return f'<span class="cited-case">{label}</span>'
         name = info.get("name") or case_name
         classes = "cited-case"
@@ -201,8 +201,6 @@ class CitationLinker:
         return f'<span class="cited-case-wrap">{cite}{_severity_marker(None)}</span>'
 
 
-# The severity icons, as macros/icons.njk draws them for the pills
-# (severity-stop, severity-warning, severity-caution); kept in step by hand.
 _SEVERITY_ICON_PATHS: dict[str, str] = {
     "Stop": (
         "M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06"
@@ -308,7 +306,11 @@ def _render_pseudo_markdown(
     text: str, linker: CitationLinker
 ) -> tuple[str, list[dict[str, str]]]:
     """The mock fixtures' format: `## Title` sections of blank-line
-    separated paragraphs with inline `<citedCase>` tags."""
+    separated paragraphs with inline `<citedCase>` tags, and footnotes
+    as `[^n]` marks with `[^n]: text` lines, listed after the text."""
+    notes = FOOTNOTE_DEF_RE.findall(text)
+    known = {label for label, _ in notes}
+    text = FOOTNOTE_DEF_RE.sub("", text)
     parts = SECTION_RE.split(text.strip())
     preamble = parts[0]
     section_pairs = list(zip(parts[1::2], parts[2::2], strict=False))
@@ -322,32 +324,69 @@ def _render_pseudo_markdown(
     ]
     chunks: list[str] = []
     if preamble.strip():
-        chunks.append(_render_paragraphs(preamble, linker))
+        chunks.append(_render_paragraphs(preamble, linker, known))
     for sid, body in section_pairs:
         sid_clean = sid.strip()
         chunks.append(
             f'<section id="{section_anchor(sid_clean)}" '
             f'data-section-id="{escape(sid_clean)}">'
             f"<h2>{escape(sid_clean)}</h2>"
-            f"{_render_paragraphs(body, linker)}</section>"
+            f"{_render_paragraphs(body, linker, known)}</section>"
+        )
+    if notes:
+        chunks.append(
+            _render_footnotes(
+                [
+                    {
+                        "label": label,
+                        "id": f"fn-1-{label}",
+                        "ref_id": f"fnref-1-{label}",
+                        "html": _inline(body),
+                    }
+                    for label, body in notes
+                ],
+                linker.link,
+            )
         )
     return "\n".join(chunks), sections
 
 
-def _render_paragraphs(text: str, linker: CitationLinker) -> str:
-    """Escape the prose, keep the `<citedCase>` tags, then link them."""
+def _inline(text: str) -> str:
+    """Escape prose, keeping its `<citedCase>` tags for the linker."""
+    out = []
+    last = 0
+    for m in CITED_CASE_RE.finditer(text):
+        out.append(escape(text[last : m.start()]))
+        out.append(f"<citedCase{m.group(1)}>{escape(m.group(2))}</citedCase>")
+        last = m.end()
+    out.append(escape(text[last:]))
+    return "".join(out)
+
+
+def _footnote_mark(label: str, known: set[str]) -> str:
+    """A `[^n]` mark: a link to its note, or plain text when the fixture
+    has no `[^n]:` line for it."""
+    label = escape(label)
+    if label not in known:
+        return f'<sup class="fnref">{label}</sup>'
+    return (
+        f'<sup class="fnref" id="fnref-1-{label}">'
+        f'<a href="#fn-1-{label}">{label}</a></sup>'
+    )
+
+
+def _render_paragraphs(
+    text: str, linker: CitationLinker, known: set[str] | None = None
+) -> str:
+    """Escape the prose, keep the `<citedCase>` tags, then link them;
+    `[^n]` marks become footnote marks."""
     rendered = []
     for paragraph in (p.strip() for p in text.strip().split("\n\n")):
         if not paragraph:
             continue
-        out = []
-        last = 0
-        for m in CITED_CASE_RE.finditer(paragraph):
-            out.append(escape(paragraph[last : m.start()]))
-            out.append(
-                f"<citedCase{m.group(1)}>{escape(m.group(2))}</citedCase>"
-            )
-            last = m.end()
-        out.append(escape(paragraph[last:]))
-        rendered.append(f"<p>{linker.link(''.join(out))}</p>")
+        html = FOOTNOTE_REF_RE.sub(
+            lambda m: _footnote_mark(m.group(1), known or set()),
+            _inline(paragraph),
+        )
+        rendered.append(f"<p>{linker.link(html)}</p>")
     return "\n".join(rendered)

@@ -35,8 +35,11 @@ jobs:
       - name: Run Python tests
         run: uv run pytest
 
-      # The real data is not in the repo; the fixtures exercise every
-      # template and the full data → CSS → Eleventy chain.
+      - name: Run JavaScript tests
+        run: npm run test:js
+
+
+
       - name: Build the site from the fixtures
         run: npm run build
         env:

@@ -128,7 +128,7 @@ def test_disposition_forms() -> None:
 def test_disposition_treatment_matches_the_status_row() -> None:
     assert disposition_treatment({"label": "Affirmed", "text": ""}) == {
         "treatment": "Affirmed by",
-        "severity": "Neutral",
+        "severity": "Positive",
         "text": "",
     }
     assert disposition_treatment({"label": "Other", "text": "Denied."}) == {
@@ -193,7 +193,6 @@ def test_expand_quote_widens_to_the_sentence() -> None:
         expand_quote(DOCUMENT, "not in the text at all")
         == "not in the text at all"
     )
-    # straight quotes in the model's words match curly ones in the text
     assert expand_quote(DOCUMENT, '"clearly established" standard') == (
         "The “clearly established” standard applies here."
     )
@@ -233,14 +232,12 @@ def test_mark_case_in_quote() -> None:
         'See <strong class="evidence-card__case">552 U.S. 38</strong>, 41 '
         "&amp; &lt;n&gt;."
     )
-    # the first party's name, in full, every time it appears
     assert mark_case_in_quote(
         "As Pearson explained, Pearson controls.", [], "Pearson v. Callahan"
     ) == (
         'As <strong class="evidence-card__case">Pearson</strong> explained, '
         '<strong class="evidence-card__case">Pearson</strong> controls.'
     )
-    # nothing to mark: the quote comes back escaped and unchanged
     assert mark_case_in_quote("As Gall explained,", [], "Gall v. US") == (
         "As Gall explained,"
     )

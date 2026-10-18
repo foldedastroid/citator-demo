@@ -1,0 +1,59 @@
+
+{% from "macros/icons.njk" import icon %}
+{% from "macros/treatment.njk" import signal %}
+
+{% macro matrixTable(b, cols, axis, period="") %}
+{% set columns = cols %}
+{% if axis == "year" and b.unknownDateCount %}{% set columns = cols.concat([{"key": "undated", "label": "Date not available", "n": b.unknownDateCount, "counts": b.unknownDateCounts, "undated": true}]) %}{% endif %}
+<div class="cite-chart__scroll" data-axis="{{ axis }}"{% if period %} data-period="{{ period.mode }}"{% endif %} x-bind:class="axisClass" role="region" aria-label="Citing references by signal and {{ period.unit | lower if period else 'court' }}. Scroll horizontally to inspect more columns." tabindex="0">
+  <table class="cite-chart__table" style="--chart-columns: {{ columns | length }}">
+    <caption class="sr-only">{{ b.total }} citing opinions in this preview. Each nonzero count narrows the list below by signal and {{ 'date range' if axis == 'year' else 'court' }}. Zero means no matching opinion in this preview.</caption>
+    <colgroup><col class="cite-chart__signal-col">{% for c in columns %}<col>{% endfor %}</colgroup>
+    <thead><tr>
+      <th scope="col" class="cite-chart__corner">Signal <span class="cite-chart__total">{{ b.total }}</span></th>
+      {% for c in columns %}
+      <th scope="col" class="cite-chart__col{% if c.undated %} cite-chart__col--undated{% endif %}"{% if c.startDate %} aria-label="{{ c.startDate }} through {{ c.endDate }}, inclusive; {{ c.n }} opinions"{% endif %}>
+        <span class="cite-chart__col-label" title="{{ (c.startDate ~ ' through ' ~ c.endDate ~ ', inclusive') if c.startDate else c.label }}">{{ c.label }}</span>
+        <span class="cite-chart__col-total">{{ c.n }} opinion{% if c.n != 1 %}s{% endif %}</span>
+      </th>
+      {% endfor %}
+    </tr></thead>
+    <tbody>
+    {% for p in b.tiers %}
+      <tr class="cite-chart__row{% if not p.n %} is-empty{% endif %}">
+        <th scope="row" class="cite-chart__tier"><span class="cite-chart__tier-label">{{ signal(p.tier, "cite-chart__mark") }}{{ p.tier }}<span class="cite-chart__tier-n">{{ p.n }}</span></span></th>
+        {% for c in columns %}{% set n = c.counts[p.tier] or 0 %}
+        <td class="cite-chart__td{% if not n %} is-empty{% endif %}{% if c.undated %} cite-chart__td--undated{% endif %}">
+          {% if n %}
+          <a href="#{{ b.list }}" data-narrow="{{ p.tier | lower }}" {% if axis == "court" %}data-narrow-court="{{ c.key }}"{% else %}data-narrow-year="{{ c.key }}"{% endif %}
+             class="cite-chart__cell" x-bind:class="narrowItemClass" x-bind:aria-current="narrowItemCurrent" x-on:click="narrowFromCell"
+             aria-label="{{ p.tier }}, {{ (c.startDate ~ ' through ' ~ c.endDate ~ ', inclusive') if c.startDate else c.label }}: {{ n }} citing opinion{% if n != 1 %}s{% endif %}">{{ n }}</a>
+          {% else %}<span class="cite-chart__zero"><span aria-hidden="true">—</span><span class="sr-only">0</span></span>{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}
+
+{% macro citingChart(b) %}
+{% set id = b.id or b.list %}
+<section class="cite-chart analysis-card" x-data="citingChart" data-list="{{ b.list }}" data-default-period="{{ b.defaultPeriodMode }}" data-period-year="{{ b.periodGroups.year.available }}" data-period-decade="{{ b.periodGroups.decade.available }}" data-period-century="{{ b.periodGroups.century.available }}" aria-labelledby="cite-chart-title-{{ id }}">
+  <div class="cite-chart__head">
+    <h3 id="cite-chart-title-{{ id }}" class="cite-chart__title"><button type="button" class="cite-chart__toggle" aria-controls="cite-chart-body-{{ id }}" x-bind:aria-expanded="chartExpanded" x-on:click="toggleChart">{{ icon("chevron-right", "cite-chart__chevron") }}Citing references by signal</button></h3>
+    <div class="seg" role="group" aria-label="Chart columns" x-bind:class="chartBodyClass">{% for axis in [{"key": "court", "label": "Court"}, {"key": "year", "label": "Date"}] %}<button type="button" class="seg__btn" data-axis="{{ axis.key }}" x-bind:aria-pressed="axisPressed" x-on:click="setAxis">{{ axis.label }}</button>{% endfor %}</div>
+  </div>
+  <div id="cite-chart-body-{{ id }}" class="cite-chart__body" x-bind:class="chartBodyClass">
+    <div class="cite-chart__toolbar">
+      <label class="cite-chart__period" x-bind:class="periodControlClass"><span>Date columns</span><select x-bind:value="periodMode" x-on:change="setPeriod"><option value="auto">Automatic</option>{% for mode in ["year", "decade", "century"] %}{% set g = b.periodGroups[mode] %}<option value="{{ mode }}"{% if not g.available %} disabled{% endif %}>{{ g.unit }} · {{ g.columnCount }} columns{% if not g.available %} (span too wide){% endif %}</option>{% endfor %}</select></label>
+      <p class="cite-chart__instruction">Select a count to narrow the opinions below.</p>
+      <div class="cite-chart__pan" role="group" aria-label="Scroll chart" x-bind:class="scrollControlsClass"><button type="button" aria-label="Scroll chart left" x-bind:disabled="atScrollStart" x-on:click="scrollBackward"><span aria-hidden="true">←</span></button><button type="button" aria-label="Scroll chart right" x-bind:disabled="atScrollEnd" x-on:click="scrollForward"><span aria-hidden="true">→</span></button></div>
+    </div>
+    {{ matrixTable(b, b.courts, "court") }}
+    {% for mode in ["year", "decade", "century"] %}{% set g = b.periodGroups[mode] %}{% if g.available %}{{ matrixTable(b, g.periods, "year", g) }}{% endif %}{% endfor %}
+    <p class="cite-chart__coverage">{{ b.total }} citing opinion{% if b.total != 1 %}s{% endif %} in this preview.{% if b.dateStart != none %} Dated {{ b.dateStart }}–{{ b.dateEnd }}.{% endif %}{% if b.unknownDateCount %} {{ b.unknownDateCount }} with no valid date, shown separately from the calendar scale.{% endif %}{% if b.uncharted %} {{ b.uncharted }} with a treatment outside these signals {{ "is" if b.uncharted == 1 else "are" }} listed below but not charted.{% endif %} Calendar columns include empty intervals; each count covers the entire labelled range.</p>
+  </div>
+</section>
+{% endmacro %}

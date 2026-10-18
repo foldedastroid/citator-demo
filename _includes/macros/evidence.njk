@@ -1,13 +1,4 @@
-{# One evidence card inside an expanded treatment row: the pill, the
-   rationale, the quote with its status line, and a way to the passage.
-   `card` has label, severity, rationale, quote, quote_html (the quote
-   escaped, the case's name or citation in bold), quote_status, quote_names
-   and optionally other_label. `defs` is the page's treatment_definitions
-   data, for the pill's tooltip. `where` names the text the quote comes from
-   ("the opinion" or "the citing opinion"). With `href` the passage link is
-   an anchor to another page; without it the card renders the
-   "Read in the opinion" button (opinion_tabs.readQuote); with
-   `linkable` false it renders no way to the passage. #}
+
 {% from "macros/treatment.njk" import severityBadge %}
 {% from "macros/icons.njk" import icon %}
 
@@ -21,7 +12,8 @@
   {% if card.quote %}
   <blockquote class="evidence-card__quote">
     <p class="evidence-card__quote-text">{{ card.quote_html | safe }}</p>
-    {# two checks: is the quote in the text, and does it name this case #}
+
+
     <p class="quote-status">
       {% if card.quote_status == "found" %}<span class="quote-status__ok">✓ In {{ where }}</span>
       {% elif card.quote_status == "stitched" %}<span class="quote-status__ok">✓ In {{ where }}, separate passages</span>

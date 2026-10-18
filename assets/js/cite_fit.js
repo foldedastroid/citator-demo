@@ -1,17 +1,17 @@
-/*
-Fit each clamped citation list (macros/lists.njk) that sits in a block
-cell, a <dd data-cite-cell>, to one line. The macro marks up to `limit`
-entries as candidates and the rest `.cite-extra`; this script hides,
-from the end, every candidate that would overflow the cell or wrap to a
-second line, and sets the "+N" button to the number of entries now
-hidden. It runs when the page loads, when the fonts are ready, whenever
-a cell changes size (a resize, a tab or row being shown) and when a list
-is collapsed again. A list in an inline cell (the tab rows' detail line)
-is not fitted: it shows its first `limit` entries.
 
-Plain script, no Alpine. The expanded state (`.is-expanded` on the cell,
-set by composables/list_toggle.js) shows everything and is left alone.
-*/
+
+
+
+
+
+
+
+
+
+
+
+
+
 const HIDDEN = 'cite-fit-hidden';
 
 function fitList(list) {
@@ -23,11 +23,11 @@ function fitList(list) {
   const button = list.nextElementSibling;
   const hasButton = button && button.classList.contains('cite-list__more');
 
-  // measure with everything in place: all candidates and the button
+
   candidates.forEach((i) => i.classList.remove(HIDDEN));
   if (hasButton) button.hidden = false;
   const box = cell.getBoundingClientRect();
-  if (box.width === 0) return; // not displayed yet; the observer calls again
+  if (box.width === 0) return;
   const lineTop = candidates[0].getBoundingClientRect().top;
   const fits = (el) => {
     const r = el.getBoundingClientRect();
@@ -68,7 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     window.addEventListener('resize', fitAll);
   }
-  // a list collapsed again may have been resized while open
+
+
   document.addEventListener('cite-list:collapse', (e) => {
     e.target.querySelectorAll('[data-cite-fit]').forEach(fitList);
   });

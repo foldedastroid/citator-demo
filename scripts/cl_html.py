@@ -53,8 +53,6 @@ from typing import Any
 
 CITED_CASE_HREF_RE = re.compile(r"^/opinion/(\d+)/")
 
-# Writing labels: the <opinion type="..."> attribute is more specific than
-# CourtListener's Opinion.type code, so it wins when present.
 OPINION_TAG_LABEL = {
     "majority": "Opinion of the Court",
     "plurality": "Plurality opinion",
@@ -82,7 +80,6 @@ CL_TYPE_LABEL = {
     "100trialcourt": "Trial court order",
 }
 
-# Block-level tags and the block type each produces.
 BLOCK_TYPE = {
     "p": "paragraph",
     "li": "paragraph",
@@ -102,21 +99,18 @@ BLOCK_TYPE = {
     "parties": "paragraph",
 }
 INLINE_TAGS = {"em": "em", "i": "em", "strong": "strong", "b": "strong"}
-# Elements whose entire content is dropped (page furniture).
 DROP_TAGS = {"page-number", "page", "script", "style"}
 DROP_CLASS_SPAN = {"star-pagination"}
-DROP_CLASS_A = {"page-label", "lbl"}  # CL page label; centralia note number
-DROP_CLASS_DIV = {"pgbreak"}  # centralia "p. N" page marker
-FOOTNOTE_CONTAINER = {"footnote"}  # Harvard <footnote label="n">
+DROP_CLASS_A = {"page-label", "lbl"}
+DROP_CLASS_DIV = {"pgbreak"}
+FOOTNOTE_CONTAINER = {"footnote"}
 FOOTNOTE_DIV_CLASSES = {
     "footnote",
     "fn",
-}  # Lawbox div.footnote, centralia div.fn
-AUTHOR_DIV_CLASSES = {"byline"}  # centralia author line
+}
+AUTHOR_DIV_CLASSES = {"byline"}
 
-FN_SENTINEL = (
-    "\x00FN{label}\x02"  # replaced with a namespaced <sup> per writing
-)
+FN_SENTINEL = "\x00FN{label}\x02"
 _FN_SENTINEL_RE = re.compile("\x00FN(.*?)\x02")
 TAG_RE = re.compile(r"<[^>]+>")
 _INLINE_TAG_RE = re.compile(r"</?(?:em|strong)>")
@@ -156,12 +150,6 @@ def cited_case_tag(
     return f"<citedCase{''.join(attrs)}>{html.escape(label, quote=False)}</citedCase>"
 
 
-# ── Citation-group state (from the extraction pipeline) ───────────────────
-# `group_state` for one writing: {"occ": {idx: group-or-None}, "groups":
-# {gid: {"n", "name", "cluster"}}}. `occ` is keyed by the index of the
-# <span class="citation…"> in the writing's html, in document order, with
-# the group id the extraction assigned, or None when it removed the span
-# (statute, record cite…).
 def _group_for(
     group_state: dict[str, Any] | None, idx: int
 ) -> tuple[int | None, str | None, str, bool]:
@@ -183,7 +171,6 @@ def plain_text(html_text: str) -> str:
     return _ws(html.unescape(TAG_RE.sub("", html_text)))
 
 
-# ── Heading detection ─────────────────────────────────────────────────────
 _ENUM_ONLY_RE = re.compile(r"^(?:[IVXLC]+|[A-Za-z]|\d{1,2})\.?$")
 _ENUM_TITLE_RE = re.compile(r"^(?:[IVXLC]+|[A-Za-z]|\d{1,2})\.\s+\S")
 _HEADING_MAX = 90
@@ -213,7 +200,6 @@ def looks_like_heading(text: str) -> bool:
     if _ENUM_ONLY_RE.match(t):
         return True
     if t.endswith((".", ";", ",", ":")):
-        # "It is so ordered." / "Judge Davila noted:" are prose.
         return False
     if _ENUM_TITLE_RE.match(t):
         remainder = re.sub(r"^(?:[IVXLC]+|[A-Za-z]|\d{1,2})\.\s+", "", t)
@@ -222,14 +208,13 @@ def looks_like_heading(text: str) -> bool:
     return len(letters) >= 3 and letters.isupper()
 
 
-# ── Structured html parser ────────────────────────────────────────────────
 class _OpinionHTML(HTMLParser):
     """Walk structured CourtListener / Centralia html and emit blocks."""
 
     def __init__(self, group_state: dict | None = None) -> None:
         super().__init__(convert_charrefs=True)
         self.group_state = group_state
-        self._span_idx = -1  # index of the current <span class="citation…">
+        self._span_idx = -1
         self.blocks: list[dict] = []
         self.footnotes: list[dict] = []
         self.opinion_type: str | None = None
@@ -237,7 +222,7 @@ class _OpinionHTML(HTMLParser):
         self._block_type = "paragraph"
         self._drop_depth = 0
         self._inline_open: list[str] = []
-        self._strong_only = True  # every char so far inside <strong>
+        self._strong_only = True
         self._cite: dict | None = None
         self._fn: dict | None = None
         self._fn_div_depth = 0
@@ -245,7 +230,6 @@ class _OpinionHTML(HTMLParser):
         self._mark_text: list[str] = []
         self._author_div = False
 
-    # -- buffer helpers --------------------------------------------------
     def _target(self) -> list[str]:
         return self._fn["buf"] if self._fn is not None else self._buf
 
@@ -269,8 +253,6 @@ class _OpinionHTML(HTMLParser):
         if not plain_text(text):
             return
         btype = self._block_type
-        # Centralia / Lawbox put a heading inside the author line
-        # ("William H. Orrick, United States District Judge INTRODUCTION").
         if btype == "author":
             m = re.match(r"^(.*?)\s*<strong>([^<]+)</strong>\s*$", text)
             if m and plain_text(m.group(1)):
@@ -281,8 +263,6 @@ class _OpinionHTML(HTMLParser):
                     {"type": "heading", "html": m.group(2).strip()}
                 )
                 return
-            # An <author> line is often the subject of the sentence the next
-            # <p> continues; merge when the continuation starts lowercase.
             self.blocks.append({"type": "author", "html": text})
             return
         if (
@@ -298,7 +278,6 @@ class _OpinionHTML(HTMLParser):
             and self.blocks
             and self.blocks[-1]["type"] == "author"
         ):
-            # "Justice Kennedy, with whom" / "Justice White joins, concurring…"
             prev = plain_text(self.blocks[-1]["html"])
             if prev.endswith((",", "whom")):
                 self.blocks[-1]["html"] = f"{self.blocks[-1]['html']} {text}"
@@ -310,7 +289,6 @@ class _OpinionHTML(HTMLParser):
             ) or looks_like_heading(plain):
                 btype = "heading"
         if btype == "heading":
-            # Headings carry no inline emphasis of their own.
             text = _ws(_INLINE_TAG_RE.sub("", text))
         self.blocks.append({"type": btype, "html": text})
 
@@ -331,7 +309,6 @@ class _OpinionHTML(HTMLParser):
             )
         self._fn = None
 
-    # -- parser callbacks ------------------------------------------------
     def handle_starttag(
         self, tag: str, attrs: list[tuple[str, str | None]]
     ) -> None:
@@ -370,9 +347,6 @@ class _OpinionHTML(HTMLParser):
             self._block_type = "author"
             self._author_div = True
             return
-        # Footnote marks: <footnotemark>n</footnotemark>, <a class="footnote">n</a>,
-        # <sup class="fnmark"><a>n</a></sup>. Inside a footnote body the
-        # Lawbox back-link is the note's own number: drop it.
         if (
             tag == "footnotemark"
             or (tag == "a" and cls == "footnote")
@@ -390,8 +364,6 @@ class _OpinionHTML(HTMLParser):
                 n, cluster, case, removed = _group_for(
                     self.group_state, self._span_idx
                 )
-                # Pipeline state decides: removed spans and spans the state
-                # does not know stay plain text; everything else is tagged.
                 self._cite = {
                     "cluster": cluster,
                     "case": case,
@@ -448,7 +420,7 @@ class _OpinionHTML(HTMLParser):
                 self._target().append(FN_SENTINEL.format(label=label))
             return
         if self._pending_mark:
-            return  # inner tags of a mark (the <a> inside centralia's <sup>)
+            return
         if tag == "span" and self._cite is not None:
             text = _ws("".join(self._cite["text"]))
             cid, case, group, plain = (
@@ -479,7 +451,6 @@ class _OpinionHTML(HTMLParser):
         if tag in INLINE_TAGS:
             norm = INLINE_TAGS[tag]
             if norm in self._inline_open:
-                # close back to this tag
                 while self._inline_open:
                     t = self._inline_open.pop()
                     self._target().append(f"</{t}>")
@@ -524,20 +495,17 @@ def structured_html_to_blocks(
     return parser.blocks, parser.footnotes, parser.opinion_type
 
 
-# ── <pre class="inline"> flavour ──────────────────────────────────────────
 _PRE_CITE_RE = re.compile(
     r'<span class="citation(?P<cls>[^"]*)"[^>]*>(?P<inner>.*?)</span>', re.S
 )
 _PAGE_NUMBER_LINE_RE = re.compile(r"^\s*(?:-\s*)?\d{1,3}\s*(?:-\s*)?$")
-# "Page 3", "Page 3 of 18", "PAGE 12 – OPINION AND ORDER" (D. Or. footer)
 _PAGE_LABEL_LINE_RE = re.compile(
     r"^\s*(?:Page|PAGE)\s+\d+(?:\s+of\s+\d+|\s*[–—-]\s*[A-Z][A-Z ,;&'.-]*)?\s*$"
 )
-# CM/ECF stamp: "Case 3:18-md-02828-SI   Document 130   Filed 03/27/20   Page 4 of 36"
 _CASE_HEADER_LINE_RE = re.compile(
     r"^\s*Case\s+\d+:\d+-[a-z]{2}-\d+.*Page\s+\d+\s+of\s+\d+", re.I
 )
-_SHORT_LINE = 60  # chars; a shorter line may end a paragraph or be a heading
+_SHORT_LINE = 60
 
 
 def _pre_cite_sub_factory(
@@ -566,8 +534,6 @@ def _pre_cite_sub_factory(
             return text
         if not text:
             return text
-        # Sentinel form; the tag is rebuilt after entity handling so the
-        # label is escaped exactly once.
         return f"\x00CITE{cid}\x01{text}\x03{case}\x04{group}\x02"
 
     return sub
@@ -592,7 +558,7 @@ def pre_html_to_blocks(
 ) -> list[dict]:
     """Recover paragraphs (and obvious headings) from a pdftotext dump."""
     text = _PRE_CITE_RE.sub(_pre_cite_sub_factory(group_state), html_text)
-    text = TAG_RE.sub("", text)  # <pre>, </pre>, stray <a>
+    text = TAG_RE.sub("", text)
     text = html.unescape(text)
     text = text.replace("\f", "\n\n")
 
@@ -655,13 +621,11 @@ def pre_html_to_blocks(
     return blocks
 
 
-# ── Carrying CourtListener's resolved citations into other text ───────────
 _CL_CITE_LINK_RE = re.compile(
     r'<span class="citation"[^>]*>\s*<a href="/opinion/(\d+)/[^"]*"'
     r'(?:[^>]*?aria-description="([^"]*)")?[^>]*>(.*?)</a>\s*</span>',
     re.S,
 )
-# "633 F.3d 894" / "504 U.S. 555, 561" / "2007 ME 130" — volume, reporter, page.
 _REPORTER_CITE_RE = re.compile(r"^\d+\s+[A-Za-z][A-Za-z0-9.'\s-]*?\s+\d+")
 _PROTECTED_RE = re.compile(r"<citedCase [^>]*>.*?</citedCase>|<[^>]+>", re.S)
 
@@ -706,8 +670,6 @@ def inject_citations(
         protected = _PROTECTED_RE.findall(block_html)
         pieces = [
             pat.sub(
-                # m.group(0) is already-escaped html text; rebuild the tag
-                # around it without escaping twice.
                 lambda m, cid=cid, case=case: cited_case_tag(
                     cid, html.unescape(m.group(0)), case
                 ),
@@ -722,7 +684,6 @@ def inject_citations(
     return block_html
 
 
-# ── Public entry points ───────────────────────────────────────────────────
 def is_pre_dump(html_text: str) -> bool:
     return html_text.lstrip()[:200].startswith("<pre")
 
@@ -744,12 +705,6 @@ def writing_to_blocks(
     return structured_html_to_blocks(html_text, group_state)
 
 
-# ── The pipeline's added mentions (name-only references, Id., short forms) ─
-# citation_seed.State locates a manual span by (writing, text, nth) in the
-# writing's PLAIN text — `strip_to_text(html)`: block ends → newline, tags
-# stripped, entities decoded — matched whitespace-insensitively. The same
-# plain text is rebuilt here and each block's own plain text is located in
-# it, so a span's plain offsets map onto one block's html.
 _SEED_BLOCK_END = re.compile(
     r"</(p|div|blockquote|li|h[1-6])>|<br\s*/?>", re.I
 )
@@ -806,8 +761,6 @@ def _plain_positions(seg_html: str) -> tuple[str, list[int], list[int]]:
             j = seg_html.find(">", i)
             tag = seg_html[i : (n if j < 0 else j + 1)]
             i = n if j < 0 else j + 1
-            # a block boundary inside a segment (multi-paragraph footnote)
-            # is whitespace in the pipeline's plain text
             if (
                 _SEED_BLOCK_END.match(tag)
                 and plain
@@ -850,7 +803,6 @@ def inject_manual_mentions(
     if not manual:
         return 0
     norm_t = _norm(strip_to_text(writing_html))
-    # locate each segment's plain text inside the writing's plain text
     located: list[tuple[int, int, list[int], list[int]] | None] = []
     cursor = 0
     for seg in segments:
@@ -860,9 +812,7 @@ def inject_manual_mentions(
             located.append(None)
             continue
         pos = norm_t.find(plain, cursor)
-        if (
-            pos < 0 and len(plain) > 60
-        ):  # a heading trimmed / merged author line
+        if pos < 0 and len(plain) > 60:
             pos = norm_t.find(plain[:60], cursor)
         if pos < 0:
             located.append(None)
@@ -884,7 +834,6 @@ def inject_manual_mentions(
                 break
             hs, he = starts[ls], ends[le - 1]
             seg_html = segments[k]["html"]
-            # never nest inside / across an existing tag
             if any(
                 a < he and hs < b
                 for a, b in (
@@ -894,8 +843,6 @@ def inject_manual_mentions(
             ):
                 break
             inner_tags = re.findall(r"<[^>]+>", seg_html[hs:he])
-            # only inline emphasis may sit inside the span (handled below);
-            # anything else (a footnote mark, a block end) is a real boundary
             if any(not _INLINE_TAG_RE.fullmatch(t) for t in inner_tags):
                 break
             g = groups.get(m.get("group"), {})
@@ -906,10 +853,6 @@ def inject_manual_mentions(
     n_done = 0
     for k, items in inserts.items():
         seg_html = segments[k]["html"]
-        # The pipeline can list the same span twice (a duplicated add) or
-        # two spans that overlap ("Davis" inside "Davis v. Michigan …");
-        # inserting both would split the first tag. Keep the first span at
-        # each position, longest first, and drop anything it overlaps.
         accepted: list[tuple[int, int, dict[str, Any]]] = []
         for hs, he, g in sorted(items, key=lambda x: (x[0], -(x[1] - x[0]))):
             if any(a < he and hs < b for a, b, _ in accepted):
@@ -917,10 +860,6 @@ def inject_manual_mentions(
             accepted.append((hs, he, g))
         for hs, he, g in sorted(accepted, key=lambda x: x[0], reverse=True):
             mid = seg_html[hs:he]
-            # Emphasis that opens or closes inside the span ("<em>McCulloch,
-            # supra, </em>at 421") would be split by the tag: drop those
-            # tags from the span and rebalance around it — a closing tag
-            # moves before the citation, an opening tag after it.
             before_extra, after_extra = "", ""
             for t in re.findall(r"</?(?:em|strong)>", mid):
                 if t.startswith("</"):

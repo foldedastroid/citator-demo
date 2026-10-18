@@ -1,24 +1,25 @@
-{# History tab: the case's route through the courts on two axes, courts
-   along the bottom (lowest on the left, highest on the right) and time up
-   the side (oldest at the bottom, newest at the top), one row per
-   decision. Reads `opinion.appellate_history` (history.py): `chain` is
-   the decisions in time order with their grid cell and the connector
-   from the decision before; `levels` names the court columns. Grid placement is
-   passed to the stylesheet as custom properties. The cards are emitted
-   newest first, so the narrow-screen single column reads top-down too. #}
+
 {% from "macros/status.njk" import dispositionLabel %}
 {% from "macros/icons.njk" import icon %}
 
 {% set history = opinion.appellate_history %}
 {% set axis_row = (history.chain | length) * 2 %}
-<section aria-label="Appellate history">
+<section class="analysis-card history-analysis" aria-label="Appellate history" x-data="historyViews">
   {% if history.chain | length > 1 %}
+  <div class="history-views__bar">
+    <div class="seg" role="group" aria-label="History view">
+      {% for v in [{"key": "courts", "label": "Courts"}, {"key": "timeline", "label": "Timeline"}] %}
+      <button type="button" class="seg__btn" data-history-view="{{ v.key }}" aria-pressed="{{ 'true' if loop.first else 'false' }}" x-bind:aria-pressed="historyViewPressed" x-on:click="setHistoryView">{{ v.label }}</button>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="history-view" data-history-view="courts" x-bind:class="historyViewClass">
   <div class="history-scroll">
   <div class="history-chain" style="--history-columns: {{ history.levels | length }}; --history-rows: {{ history.chain | length }}">
     <span class="history-axis history-axis--y" style="--row-end: {{ axis_row }}" aria-hidden="true"></span>
     <span class="history-axis history-axis--x" style="--row: {{ axis_row }}" aria-hidden="true"></span>
 
-    {# the court axis: one label per column, along the bottom #}
+
     {% for lv in history.levels %}
     <p class="history-chain__head" style="--col: {{ lv.col }}; --row: {{ axis_row }}">{{ lv.label }}</p>
     {% endfor %}
@@ -32,7 +33,7 @@
       {% if step.case_name %}
       <p class="history-node__case">
         {% if step.role == "reported" %}As reported by {% endif %}
-        {% if step.url %}<a href="{{ step.url }}" class="history-node__link">{{ step.case_name }}</a>
+        {% if step.url and (not pageIds or step.cluster_id in pageIds) %}<a href="{{ step.url }}" class="history-node__link">{{ step.case_name }}</a>
         {% else %}{{ step.case_name }}{% endif %}
       </p>
       {% endif %}
@@ -45,7 +46,7 @@
         </summary>
         <dl class="meta-list meta-list--compact">
           {% if step.date_filed %}<div><dt>Date filed</dt><dd>{{ step.date_filed | usdate }}</dd></div>{% endif %}
-          {% if step.docket_number %}<div><dt>Case Number</dt><dd>{{ step.docket_number }}</dd></div>{% endif %}
+          {% if step.docket_number %}<div><dt>Docket No.</dt><dd>{{ step.docket_number }}</dd></div>{% endif %}
           {% if step.citations | length %}
           <div><dt>Citations</dt><dd>{% for c in step.citations %}{{ c }}{% if not loop.last %} <span class="cite-list__dot" aria-hidden="true">·</span> {% endif %}{% endfor %}</dd></div>
           {% endif %}
@@ -65,7 +66,7 @@
       {% endif %}
     </div>
 
-    {# the time axis: when this decision was made, beside its row #}
+
     <p class="history-time" style="--row: {{ step.row }}">
       {%- if step.date_filed %}{{ step.date_filed | usdate }}
       {%- if step.role == "reported" %} <span class="history-time__note">reported</span>{% endif %}
@@ -73,9 +74,8 @@
     </p>
 
     {% for link in step.links %}
-    {# the route from the decision before this one in time, below, to this
-       card: an elbow across the connector row, up into this card. What
-       each court did is on its own card, so the elbow carries no label. #}
+
+
     <div class="history-move history-move--{{ link.dir }}"
          style="--row: {{ link.row }}; --col: {{ link.col_start }}; --col-end: {{ link.col_end }}; --history-inset: {{ 50 / link.span }}%" aria-hidden="true">
       <span class="history-move__stub history-move__stub--from"></span>
@@ -93,7 +93,34 @@
     <li><span class="history-key__swatch history-key__swatch--reported" aria-hidden="true"></span>Known only from a later opinion's account of it</li>
     {% endif %}
   </ul>
+  </div>
+  {% include "partials/history-timeline.njk" %}
+  <h3 class="history-list__title">In order, newest first</h3>
+  <ol role="list" class="history-list">
+    {% for step in history.chain | reverse %}
+    <li class="history-list__item{% if step.role == 'self' %} is-self{% elif step.role == 'reported' %} is-reported{% endif %}">
+      <span class="history-list__date">{{ step.date_filed | usdate if step.date_filed else "Undated" }}</span>
+      <div class="history-list__body">
+        <p class="history-list__court">{{ step.court }}{% if step.role == "self" %}<span class="history-list__here">This opinion</span>{% endif %}</p>
+        {% if step.case_name %}
+        <p class="history-list__case">
+          {% if step.role == "reported" %}As reported by {% endif %}
+          {% if step.url and (not pageIds or step.cluster_id in pageIds) %}<a href="{{ step.url }}" class="history-node__link">{{ step.case_name }}</a>{% else %}{{ step.case_name }}{% endif %}
+        </p>
+        {% endif %}
+        {% for act in step.acts %}
+        <div class="history-list__acts">
+          {% for t in act.treatments %}{{ dispositionLabel(t.severity, t.treatment, t.text, treatment_definitions[t.defined_as]) }}{% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
   {% else %}
-  <p class="tab-empty">No appellate history has been identified for this opinion.</p>
+  <div class="tab-empty">
+    <p class="m-0">No appellate history has been identified for this opinion.</p>
+    {% if opinion.cl_url %}<p class="tab-empty__actions"><a href="{{ opinion.cl_url }}" class="doc-action" target="_blank" rel="noopener">Check the docket on CourtListener</a></p>{% endif %}
+  </div>
   {% endif %}
 </section>

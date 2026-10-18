@@ -1,14 +1,4 @@
-{# Treatment indicators.
-   - severityBadge(severity, label, small=false, definition=""): the pill
-     every treatment renders as; `small` is the filter menus' size. With
-     a `definition` (treatment_definitions[label], global data that a
-     macro cannot read itself) the pill carries a tooltip element, shown
-     on hover and focus: the label in bold above a rule, the definition
-     under it. The tip is hidden with opacity, so assistive technology
-     reads the pill's label and then the definition; the tip's own copy of
-     the label is hidden from it so nothing is read twice.
-   - validationDot(state, expert_treatment): the expert-validation mark
-     beside a pill; only rendered when the `validation` build flag is on. #}
+
 {% from "macros/icons.njk" import icon %}
 
 {% macro severityBadge(severity, label, small=false, definition="") %}
@@ -18,6 +8,8 @@
     {%- set variant = "severity-badge--warning" -%}{%- set glyph = "severity-warning" -%}
   {%- elif severity == "Caution" -%}
     {%- set variant = "severity-badge--caution" -%}{%- set glyph = "severity-caution" -%}
+  {%- elif severity == "Positive" -%}
+    {%- set variant = "severity-badge--positive" -%}{%- set glyph = "severity-positive" -%}
   {%- else -%}
     {%- set variant = "severity-badge--neutral" -%}{%- set glyph = "severity-neutral" -%}
   {%- endif -%}
@@ -45,3 +37,50 @@
   {%- endif -%}
   <span class="validation-dot tooltip-target" data-tooltip="{{ tooltip }}" role="img" aria-label="{{ label }}" tabindex="0">{{ glyph }}</span>
 {% endmacro %}
+
+{% macro signal(severity, cls="signal-mark") %}
+{%- set tier = (severity or "Neutral") | lower -%}
+{{ icon("severity-" ~ tier, cls ~ " signal-mark signal-mark--" ~ tier) }}
+{%- endmacro %}
+
+{% macro allocation(title, rows, key, href, noun, empty) %}
+{%- set tiers = ["Stop", "Warning", "Caution", "Positive", "Neutral"] -%}
+{%- set total = rows | length -%}
+{%- set parts = [] -%}
+{%- for t in tiers -%}
+  {%- set hits = [] -%}{%- for r in rows -%}{%- if r[key] == t -%}{%- set hits = (hits.push(r), hits) -%}{%- endif -%}{%- endfor -%}
+  {%- set parts = (parts.push({"tier": t, "n": hits | length}), parts) -%}
+{%- endfor -%}
+<section class="meter">
+  <header class="meter__head">
+    <span class="meter__title">{{ title }}</span>
+    <a href="{{ href }}" class="meter__total"><b>{{ total }}</b> {{ noun }}</a>
+  </header>
+  {% if total %}
+  <div class="meter__bar" role="img" aria-label="{% for p in parts %}{% if p.n %}{{ p.n }} {{ p.tier | lower }}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %} of {{ total }}">
+    {%- for p in parts %}{% if p.n %}<a href="{{ href }}" data-narrow="{{ p.tier | lower }}" tabindex="-1" class="meter__segment meter__segment--{{ p.tier | lower }}" style="width: {{ (p.n / total * 100) | round(2) }}%" title="Show the {{ p.n }} {{ p.tier | lower }}"></a>{% endif %}{% endfor -%}
+  </div>
+  <ul role="list" class="meter__rows">
+    {% for p in parts %}
+    <li>
+      {% if p.n %}<a href="{{ href }}" data-narrow="{{ p.tier | lower }}" class="meter__row" aria-label="{{ p.tier }}: {{ p.n }} of {{ total }}, show them">{% else %}<span class="meter__row meter__row--empty">{% endif %}
+      <span class="meter__label"><i class="meter__dot meter__segment--{{ p.tier | lower }}" aria-hidden="true"></i>{{ p.tier }}</span>
+      <span class="meter__value">{{ p.n }}</span>
+      <span class="meter__share">{{ (p.n / total * 100) | round }}%</span>
+      {% if p.n %}</a>{% else %}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="meter__empty">{{ empty }}</p>
+  {% endif %}
+</section>
+{% endmacro %}
+
+{% macro discussion(n, where) %}
+{%- set level = 0 if not n else (1 if n == 1 else (2 if n <= 3 else (3 if n <= 6 else 4))) -%}
+<span class="discussion" title="{{ n or 0 }} mention{% if n != 1 %}s{% endif %} {{ where }}">
+  <span class="discussion__bars" aria-hidden="true">{% for i in range(1, 5) %}<i class="discussion__bar{% if i <= level %} is-on{% endif %}"></i>{% endfor %}</span>
+  <span class="discussion__n">{{ n or "" }}</span>
+</span>
+{%- endmacro %}

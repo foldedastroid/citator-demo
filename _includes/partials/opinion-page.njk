@@ -1,0 +1,384 @@
+
+{% from "macros/status.njk" import statusRows %}
+{% from "macros/icons.njk" import icon %}
+{% from "macros/lists.njk" import citeList %}
+{% from "macros/treatment.njk" import signal, allocation %}
+{% from "macros/narrow.njk" import narrowView %}
+
+{% set historySteps = opinion.appellate_history.steps | length %}
+{% set tabs = [
+  {"id": "opinion", "label": "Opinion", "count": 0},
+  {"id": "authorities", "label": "Authorities", "count": opinion.cited_authorities | length},
+  {"id": "cited-by", "label": "Later Courts", "count": opinion.cited_by | length},
+  {"id": "history", "label": "History", "count": historySteps if historySteps > 1 else 0}
+] %}
+
+{% set pageIds = [] %}{% for o in allOpinions %}{% set pageIds = (pageIds.push(o.cluster_id), pageIds) %}{% endfor %}
+<article x-data="opinionTabs" class="opinion-page page-with-panel">
+  {% set tiers = ["Stop", "Warning", "Caution", "Positive", "Neutral"] %}
+  {% set tierText = {
+    "Stop": "No longer good law for the proposition cited.",
+    "Warning": "Partially weakened but not entirely overturned.",
+    "Caution": "Intact but applicability is qualified.",
+    "Positive": "Followed or affirmed, with no negative treatment in this preview.",
+    "Neutral": "No negative treatment found in this preview."
+  } %}
+  {% set seen = [] %}
+  {% for x in opinion.cited_by %}{% set seen = (seen.push(x.severity), seen) %}{% endfor %}
+  {% if opinion.status.on_appeal.state == "treated" %}{% set seen = (seen.push(opinion.status.on_appeal.severity), seen) %}{% endif %}
+  {% set lead = [] %}{% for t in tiers %}{% if t in seen %}{% set lead = (lead.push(t), lead) %}{% endif %}{% endfor %}
+  {% set sig = lead[0] or "Neutral" %}
+
+  {% set citingBreak = opinion.cited_by | chartBreakdown("cited-by", "severity", "citing_court_display", "citing_date_filed") %}
+  {% set authorityBreak = opinion.cited_authorities | chartBreakdown("authorities", "overall_severity", "court_name", "date_filed_iso") %}
+
+  {% set historyKey = [] %}
+  {% for t in tiers %}
+    {% set labels = [] %}
+    {% for step in opinion.appellate_history.chain %}{% for act in step.acts %}{% for tr in act.treatments %}{% if tr.severity == t and not tr.text and tr.treatment not in labels %}{% set labels = (labels.push(tr.treatment), labels) %}{% endif %}{% endfor %}{% endfor %}{% endfor %}
+    {% if labels | length %}{% set historyKey = (historyKey.push({"tier": t, "labels": labels}), historyKey) %}{% endif %}
+  {% endfor %}
+  {% set writings = [] %}{% for sec in opinion.document.sections %}{% if sec.title not in ["I", "II", "III"] %}{% set writings = (writings.push(sec), writings) %}{% endif %}{% endfor %}
+
+  {% set standardCite = opinion.case_name ~ ", " ~ (opinion | citeTail) %}
+  {% set st = opinion.status %}
+  {% set flagReason = "No negative treatment in this preview" %}
+  {% set why = null %}
+  {% macro statusHref(x) -%}
+    /opinion/{{ x.citing_cluster_id }}/{% if x.authority_n %}#authority-{{ x.authority_n }}{% elif x.quote and x.quote_status != "missing" %}#q={{ x.quote | urlencode }}{% endif %}
+  {%- endmacro %}
+  {% if st.on_appeal.state == "treated" and st.on_appeal.severity == sig %}
+    {% set flagReason = st.on_appeal.treatment ~ " " ~ st.on_appeal.citing_name %}
+    {% set why = {"court": st.on_appeal.citing_court or "On appeal", "quote": st.on_appeal.quote, "href": (statusHref(st.on_appeal) | trim) if st.on_appeal.citing_cluster_id in pageIds else "#history"} %}
+  {% elif st.later_courts.state == "negative" and st.later_courts.severity == sig %}
+    {% set flagReason = st.later_courts.treatment ~ " " ~ st.later_courts.citing_name %}
+    {% set here = [] %}{% for r in opinion.cited_by %}{% if r.citing_cluster_id == st.later_courts.citing_cluster_id %}{% set here = (here.push(r), here) %}{% endif %}{% endfor %}
+    {% set why = {"court": st.later_courts.citing_court, "quote": st.later_courts.quote, "href": ("#citing-" ~ here[0].row_id) if here | length else ((statusHref(st.later_courts) | trim) if st.later_courts.citing_cluster_id in pageIds else "#cited-by")} %}
+  {% elif sig != "Neutral" %}
+    {% set rows = [] %}{% for r in opinion.cited_by %}{% if r.severity == sig %}{% set rows = (rows.push(r), rows) %}{% endif %}{% endfor %}
+    {% if rows | length %}
+      {% set r = rows[0] %}
+      {% set label = (r.applied[0].treatment if r.applied | length else ((r.recognized[0].treatment_past ~ " as recognized by") if r.recognized | length else "Treated by")) %}
+      {% set flagReason = label ~ " " ~ r.citing_case_name %}
+      {% set why = {"court": r.citing_court_display, "quote": (r.evidence_cards[0].quote if r.evidence_cards | length else ""), "href": "#citing-" ~ r.row_id} %}
+    {% endif %}
+  {% endif %}
+
+  <div class="opinion-main">
+  <div class="case-head">
+    <div class="case-head__bar">
+      <div class="case-head__id">
+        <p class="case-head__name" title="{{ opinion.case_name }}">{{ signal(sig, "case-head__mark") }}<span class="case-head__title">{{ opinion.case_name }}</span></p>
+        <p class="case-head__meta">
+          <span>{{ opinion.court_display }}</span>
+          <span class="tabular-nums">{{ opinion.date_filed | usdate }}</span>
+          {% if opinion.citations | length %}<span class="case-head__cites" data-cite-cell>{{ citeList(opinion.citations, dot=true) }}</span>
+          {% elif opinion.docket_numbers | length %}<span class="case-head__cites">No. {{ opinion.docket_numbers[0] }}</span>{% endif %}
+        </p>
+      </div>
+      {% set firstParty = opinion.case_name.split(" v. ")[0] %}
+      {% set reporter = opinion.citations[0] if opinion.citations | length else "" %}
+      <div class="case-head__actions" x-data="caseActions" x-on:keydown="onMenuKeydown">
+        <button type="button" class="doc-action case-find" x-on:click="toggleFind" aria-controls="doc-find" x-bind:aria-expanded="findExpanded" aria-label="Search within opinion" title="Search within opinion (/)">{{ icon("search", "w-3.5 h-3.5") }}</button>
+        <div class="split" x-on:click.outside="menuClickOutside">
+          <button type="button" class="doc-action doc-action--main" data-cite="{{ standardCite }}" x-on:click="copyCitation" title="Copy citation: {{ standardCite }}">
+            {{ icon("document", "w-3.5 h-3.5") }}<span class="doc-action__label">Copy citation</span>
+          </button>
+          <button type="button" class="doc-action doc-action--caret" x-ref="menuButton" aria-haspopup="menu" aria-controls="cite-menu" aria-expanded="false"
+                  x-bind:aria-expanded="menuExpanded" x-on:click="toggleMenu" aria-label="Other citation forms" title="Other citation forms">
+            {{ icon("chevron-down", "w-3 h-3") }}
+          </button>
+          <div id="cite-menu" class="help-menu__panel cite-menu" role="menu" aria-label="Copy citation as" x-bind:class="menuClass">
+            <p class="help-menu__label" aria-hidden="true">Copy as</p>
+            <button type="button" class="cite-menu__item" role="menuitem" tabindex="-1" data-copy="{{ standardCite }}" data-done="Citation copied" x-on:click="copyFormat">
+              <span class="cite-menu__name">Full citation</span><span class="cite-menu__sample">{{ standardCite }}</span>
+            </button>
+            {% if reporter %}
+            <button type="button" class="cite-menu__item" role="menuitem" tabindex="-1" data-copy="{{ firstParty }}, {{ reporter | replace(r/\s+\S+$/, "") }} at " data-done="Short form copied; add the pinpoint page" x-on:click="copyFormat">
+              <span class="cite-menu__name">Short form</span><span class="cite-menu__sample">{{ firstParty }}, {{ reporter | replace(r/\s+\S+$/, "") }} at ___</span>
+            </button>
+            <button type="button" class="cite-menu__item" role="menuitem" tabindex="-1" data-copy="{{ reporter }}" data-done="Reporter citation copied" x-on:click="copyFormat">
+              <span class="cite-menu__name">Reporter citation</span><span class="cite-menu__sample">{{ reporter }}</span>
+            </button>
+            {% endif %}
+            <button type="button" class="cite-menu__item" role="menuitem" tabindex="-1" data-copy="{{ opinion.case_name }}" data-done="Case name copied" x-on:click="copyFormat">
+              <span class="cite-menu__name">Case name</span><span class="cite-menu__sample">{{ opinion.case_name }}</span>
+            </button>
+            <button type="button" class="cite-menu__item" role="menuitem" tabindex="-1" x-on:click="copyPageLink">
+              <span class="cite-menu__name">Link to this opinion</span><span class="cite-menu__sample">This page's address</span>
+            </button>
+          </div>
+        </div>
+        {% if opinion.cl_url %}
+        <a href="{{ opinion.cl_url }}" class="doc-action doc-action--external" target="_blank" rel="noopener" title="Open on CourtListener">
+          <span class="doc-action__arrow-well" aria-hidden="true"><span class="doc-action__arrow doc-action__arrow--leaving">{{ icon("external", "w-3.5 h-3.5") }}</span><span class="doc-action__arrow doc-action__arrow--arriving">{{ icon("external", "w-3.5 h-3.5") }}</span></span><span class="doc-action__label">CourtListener</span>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="tab-bar" role="tablist" aria-label="Opinion sections">
+    {% for tab in tabs %}
+    <button type="button" role="tab" id="tab-{{ tab.id }}" aria-controls="panel-{{ tab.id }}"
+            data-tab="{{ tab.id }}"
+            x-bind:aria-selected="tabSelected" x-bind:tabindex="tabIndex" x-bind:class="tabClass"
+            x-on:click="selectTab" x-on:keydown="onKeydown"
+            class="tab-bar__tab">
+      {{ tab.label }}{% if tab.count %}<span class="tab-count" data-tab="{{ tab.id }}" x-bind:class="tabCountClass">{{ tab.count }}</span>{% endif %}
+    </button>
+    {% endfor %}
+  </div>
+  </div>
+
+  <div class="doc-layout" x-bind:class="docLayoutClass">
+  <nav class="doc-rail" aria-label="Parts of this document" data-doc-rail>
+    <div class="doc-rail__head">
+      <div class="find-anchor" x-ref="findAnchor">
+        <div class="find" id="doc-find" role="search" x-ref="findCard" x-bind:class="findClass" x-bind:style="findStyle" x-on:keydown.escape.stop.prevent="closeFind" x-on:click.outside="findClickOutside">
+          <div class="find__row">
+            <button type="button" class="doc-rail__find" x-ref="findButton" x-on:click="toggleFind" aria-controls="find-input" x-bind:aria-expanded="findExpanded" aria-label="Search within opinion" title="Search within opinion (/)">{{ icon("search", "w-3.5 h-3.5") }}</button>
+            <label class="sr-only" for="find-input">Search within this opinion</label>
+            <input id="find-input" type="search" class="find__input" x-ref="findInput" x-bind:disabled="findClosed" placeholder="Search within opinion" autocomplete="off" x-on:focus="findReveal" x-on:click="findReveal" x-on:input.debounce.200ms="findInput" x-on:keydown="findKeydown">
+            <button type="button" class="find__close" x-bind:disabled="findClosed" x-on:click="closeFind" aria-label="Close search">{{ icon("close", "w-3.5 h-3.5") }}</button>
+          </div>
+          <div class="find__results" x-show="findResults" x-cloak>
+            <div class="find__bar">
+              <span class="find__pos" x-text="findPos" aria-live="polite"></span>
+              <span class="occ-step" role="group" aria-label="Matches" x-show="findMany">
+                <button type="button" class="occ-step__btn" x-on:click="findPrev" aria-label="Previous match">‹</button>
+                <button type="button" class="occ-step__btn" x-on:click="findNext" aria-label="Next match">›</button>
+              </span>
+            </div>
+            <div class="find__matches" x-ref="findMatches" x-show="findExcerptResults" x-on:click="findChoose" x-on:keydown="findResultKeydown" role="group" aria-label="Matching passages"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="doc-rail__field">
+      <span class="doc-rail__track" aria-hidden="true"></span><span class="doc-rail__thumb" aria-hidden="true"></span>
+      <ol class="doc-rail__list" role="list"></ol>
+    </div>
+  </nav>
+  <div class="doc-layout__body">
+  <div class="opinion-card">
+    <header class="opinion-card__head">
+      <a href="#treatment-summary" class="doc-flag doc-flag--{{ sig | lower }}">
+        {{ signal(sig, "doc-flag__mark") }}<span class="doc-flag__tier">{{ sig }}</span><span class="doc-flag__reason">{{ flagReason }}</span>
+      </a>
+      <h1 class="opinion-card__title">{{ opinion.case_name }}</h1>
+      <dl class="meta-list mt-3">
+        <div><dt>Court</dt><dd>{{ opinion.court_display }}</dd></div>
+        <div><dt>Date filed</dt><dd>{{ opinion.date_filed | usdate }}</dd></div>
+        {% if opinion.docket_numbers | length %}<div><dt>Docket No.</dt><dd data-cite-cell>{{ citeList(opinion.docket_numbers, noun="docket number") }}</dd></div>{% endif %}
+        {% if opinion.citations | length %}
+        <div class="basis-full"><dt>Citation</dt><dd>{{ opinion | citeTail }}</dd></div>
+        {% endif %}
+      </dl>
+    </header>
+    <section id="treatment-summary" aria-label="Status of this opinion">
+      {{ statusRows(opinion.status, opinion.disposition, treatment_definitions, "opinion-status", false, "#cited-by", pageIds) }}
+    </section>
+  </div>
+
+  <div class="mt-6">
+    {% for tab in tabs %}
+    <section role="tabpanel" id="panel-{{ tab.id }}" aria-labelledby="tab-{{ tab.id }}"
+             data-tab="{{ tab.id }}" x-show="panelVisible" x-cloak tabindex="0">
+      {% if tab.id == "opinion" %}
+        <div class="opinion-body">
+          {{ opinion.document.body_html | safe }}
+        </div>
+      {% elif tab.id == "authorities" %}
+        {% include "partials/authorities-tab.njk" %}
+      {% elif tab.id == "cited-by" %}
+        {% include "partials/cited-by-tab.njk" %}
+      {% elif tab.id == "history" %}
+        {% include "partials/history-tab.njk" %}
+      {% endif %}
+    </section>
+    {% endfor %}
+  <div class="back-to-top-dock">
+    <a href="#top" class="back-to-top" x-bind:class="backToTopClass" x-bind:tabindex="backToTopTab" aria-label="Back to top" title="Back to top">
+      {{ icon("arrow-up", "w-4 h-4") }}
+    </a>
+  </div>
+  </div>
+  </div>
+  </div>
+  </div>
+
+  <aside id="app-panel" class="app-panel citator-panel" aria-label="Citator">
+    <div class="app-panel__inner">
+
+    <div class="panel-view" data-view="opinion" x-bind:class="panelViewClass">
+    <button type="button" class="panel-view__back" x-show="panelBackVisible" x-cloak x-on:click="showPanelView">{{ icon("chevron-right", "panel-view__back-icon") }}<span x-text="panelBackLabel"></span></button>
+    <section class="summary" aria-labelledby="summary-title">
+      <h2 id="summary-title" class="summary__title">Citator summary</h2>
+      <div class="summary__status summary__status--{{ sig | lower }}">
+        {{ signal(sig, "summary__mark") }}
+        <span class="summary__tier">{{ sig }}</span>
+        <button type="button" class="summary__why" x-ref="whyButton" x-on:click="toggleWhy" aria-haspopup="dialog" aria-controls="why-pop" x-bind:aria-expanded="whyExpanded">Why?</button>
+      </div>
+      <p class="summary__note">{% if st.on_appeal.state == "treated" %}{{ st.on_appeal.treatment }} {{ st.on_appeal.citing_name }}{% elif st.on_appeal.state == "not_reviewable" %}No appeal found; court of last resort{% elif st.scope == "collection" %}No appeal in this preview{% else %}No subsequent appellate history found{% endif %}</p>
+    </section>
+    {% set chain = opinion.appellate_history.chain %}
+    <section class="meter trail" aria-labelledby="trail-title">
+      <div class="meter__head">
+        <h2 id="trail-title" class="meter__title">History</h2>
+        {% if chain | length > 1 %}<a href="#history" class="trail__all">Full history</a>{% endif %}
+      </div>
+      {% if chain | length > 1 %}
+      <ol class="trail__list" role="list">
+        {% for step in chain | reverse %}
+        <li class="trail__step{% if step.role == 'self' %} is-self{% elif step.role == 'reported' %} is-reported{% endif %}">
+          <p class="trail__court">{{ step.court }}</p>
+          <p class="trail__meta">
+            <span class="tabular-nums">{{ step.date_filed | usdate if step.date_filed else "Undated" }}</span>
+            {% if step.role == "self" %}<span class="trail__here">This opinion</span>
+            {% elif step.case_name and step.url and step.cluster_id in pageIds %}<a href="{{ step.url }}" class="trail__case" title="{{ step.case_name }}">{{ step.case_name }}</a>{% endif %}
+          </p>
+          {% for act in step.acts %}{% for t in act.treatments %}
+          <p class="trail__act">{{ signal(t.severity, "trail__mark") }}{{ t.text or t.treatment }}</p>
+          {% endfor %}{% endfor %}
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="meter__empty">No appellate history found</p>
+      {% endif %}
+    </section>
+    {{ allocation("Citing references", opinion.cited_by, "severity", "#cited-by", "citing", "None in this preview") }}
+    {% if opinion.cited_by | length %}
+    {% set ctaText = "View citing references" %}
+    <a href="#cited-by" class="cite-cta" data-cite-cta>
+      <span class="cite-cta__label">{{ ctaText }}</span>
+      <span class="cite-cta__veil" aria-hidden="true">
+        <span class="cite-cta__label">{{ ctaText }}</span>
+        <span class="cite-cta__well">{{ icon("arrow-right", "cite-cta__arrow cite-cta__arrow--leaving") }}{{ icon("arrow-right", "cite-cta__arrow cite-cta__arrow--arriving") }}</span>
+      </span>
+    </a>
+    {% endif %}
+    {{ allocation("Table of authorities", opinion.cited_authorities, "overall_severity", "#authorities", "cited", "None identified") }}
+    <div class="switch-row">
+      <button type="button" class="switch-row__control" role="switch" aria-checked="true" aria-describedby="text-signals-help" data-text-signals>
+        <span class="switch-row__label">Treatment beside citations</span>
+        <span class="switch" aria-hidden="true"></span>
+      </button>
+      <p id="text-signals-help" class="switch-row__help">Marks each cited case in the opinion text with its signal.</p>
+    </div>
+    </div>
+    <div class="panel-view" data-view="cited-by" x-bind:class="panelViewClass">
+      {{ narrowView(citingBreak, "#cited-by", "citing opinions", "None in this preview") }}
+    </div>
+    <div class="panel-view" data-view="authorities" x-bind:class="panelViewClass">
+      {{ narrowView(authorityBreak, "#authorities", "authorities", "None identified") }}
+    </div>
+    <div class="panel-view" data-view="history" x-bind:class="panelViewClass">
+      <section aria-labelledby="display-title">
+        <h2 id="display-title" class="summary__title">Display</h2>
+        <section class="narrow__group" aria-labelledby="display-signals">
+          <h3 id="display-signals" class="narrow__title">Signal colours</h3>
+          {% if historyKey | length %}
+          <ul role="list" class="narrow__rows">
+            {% for k in historyKey %}
+            <li class="narrow__row narrow__row--key">
+              <span class="narrow__label">{{ signal(k.tier, "narrow__mark") }}{{ k.tier }}</span>
+              <span class="narrow__note">{{ k.labels | join(", ") }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          <p class="narrow__hint">Each decision's pill is in the signal of what that court did.</p>
+          {% else %}
+          <p class="meter__empty">No decisions to display</p>
+          {% endif %}
+        </section>
+        <button type="button" class="panel-view__link" x-on:click="showPanelSummary">Citator summary {{ icon("arrow-right", "w-[13px] h-[13px]") }}</button>
+      </section>
+    </div>
+    </div>
+  </aside>
+
+  <div class="occ-pop" id="why-pop" x-ref="whyCard" x-cloak role="dialog" aria-labelledby="why-pop-title"
+       x-bind:class="whyClass" x-bind:style="whyStyle"
+       x-on:keydown.escape.stop="closeWhy" x-on:keydown.escape.window="closeWhy" x-on:click.outside="whyClickOutside">
+    <header class="occ-pop__head">
+      <span class="occ-pop__mark" aria-hidden="true">{{ signal(sig, "w-2.5 h-2.5") }}</span>
+      <span class="occ-pop__kind">Why this signal</span>
+      <button type="button" class="occ-pop__close" x-on:click="closeWhy" aria-label="Close">{{ icon("close", "w-[13px] h-[13px]") }}</button>
+    </header>
+    <h3 id="why-pop-title" class="occ-pop__title">{{ sig }}: {{ flagReason }}</h3>
+    {% if why %}
+    {% if why.court %}<div class="occ-pop__scrub"><span class="occ-pop__scrub-label">{{ why.court }}</span></div>{% endif %}
+    {% if why.quote %}<blockquote class="occ-pop__quote">{{ why.quote }}</blockquote>{% endif %}
+    <footer class="occ-pop__foot">
+      <a href="{{ why.href }}" class="occ-pop__action" x-on:click="closeWhy">Open the treatment {{ icon("arrow-right", "w-[13px] h-[13px]") }}</a>
+      <a href="#treatment-summary" class="occ-pop__action" x-on:click="closeWhy">Status rows</a>
+    </footer>
+    {% else %}
+    <p class="occ-pop__text">No later court or appeal in this preview treats this case negatively.</p>
+    <footer class="occ-pop__foot"><a href="#cited-by" class="occ-pop__action" x-on:click="closeWhy">Later courts</a></footer>
+    {% endif %}
+  </div>
+
+  <div class="sel-bar" x-ref="selBar" x-cloak role="toolbar" aria-label="Selected text"
+       x-bind:class="selClass" x-bind:style="selStyle" x-on:mousedown.prevent>
+    <button type="button" class="sel-bar__btn" x-on:click="selCopyCited">{{ icon("document", "w-3.5 h-3.5") }}Copy with citation</button>
+    <button type="button" class="sel-bar__btn" x-on:click="selCopy">Copy</button>
+    <button type="button" class="sel-bar__btn" x-on:click="selCopyLink">{{ icon("link", "w-3.5 h-3.5") }}Link</button>
+    <button type="button" class="sel-bar__btn" x-on:click="selFind">{{ icon("search", "w-3.5 h-3.5") }}Find</button>
+  </div>
+
+  <div class="occ-pop" x-ref="occCard" x-cloak role="dialog" aria-labelledby="occ-pop-title"
+       x-bind:class="occNavClass" x-bind:style="occNavStyle"
+       x-on:keydown.escape.window="occEscape" x-on:click.outside="occClickOutside"
+       x-on:pointerenter="occHold" x-on:pointerleave="occRelease"
+       x-on:focusin="occHold" x-on:focusout="occRelease">
+    <header class="occ-pop__head">
+      <span class="occ-pop__mark" aria-hidden="true">{{ icon("document", "w-2.5 h-2.5") }}</span>
+      <span class="occ-pop__kind">Cited case</span>
+      <button type="button" class="occ-pop__close" x-on:click="occEscape" aria-label="Close case preview">
+        {{ icon("close", "w-[13px] h-[13px]") }}
+      </button>
+    </header>
+    <h3 id="occ-pop-title" class="occ-pop__title" x-text="occNavName"></h3>
+    <div class="occ-pop__scrub">
+      <span class="occ-pop__scrub-label">Mention</span>
+      <span class="occ-step" role="group" aria-label="Mentions of this case in the opinion" x-show="occNavMany">
+        <button type="button" class="occ-step__btn" x-on:click="occPrev" aria-label="Previous mention">‹</button>
+        <span class="occ-step__pos" x-text="occMentionPos" aria-live="polite"></span>
+        <button type="button" class="occ-step__btn" x-on:click="occNext" aria-label="Next mention">›</button>
+      </span>
+      <span class="occ-step__pos" x-show="occNavOne">Only mention</span>
+    </div>
+    <div class="occ-pop__treatment" x-show="occNavHasAnalysis">
+      <div class="occ-pop__pills" x-ref="occPills"></div>
+      <span class="occ-step" role="group" aria-label="Treatments of this case" x-show="occItemMany">
+        <button type="button" class="occ-step__btn" x-on:click="occItemPrev" aria-label="Previous treatment">‹</button>
+        <span class="occ-step__pos" x-text="occItemPos" aria-live="polite"></span>
+        <button type="button" class="occ-step__btn" x-on:click="occItemNext" aria-label="Next treatment">›</button>
+      </span>
+    </div>
+    <div class="occ-pop__pills" x-show="occNavOnlyCited" x-ref="occPillsPlain"></div>
+    <p class="occ-pop__text" x-show="occNavHasAnalysis" x-text="occNavRationale"></p>
+    <blockquote class="occ-pop__quote" x-show="occNavHasQuote" x-text="occNavQuote"></blockquote>
+    <p class="occ-pop__text" x-show="occNavOnlyCited">This opinion only cites the case; it applies no treatment to it and recognizes none.</p>
+    <footer class="occ-pop__foot">
+      <button type="button" class="occ-pop__action" x-show="occNavHasAnalysis" x-on:click="occToRow">
+        Full analysis {{ icon("arrow-right", "w-[13px] h-[13px]") }}
+      </button>
+      <a class="occ-pop__action" x-show="occNavHasUrl" x-bind:href="occNavUrl" href="/">
+        Open case {{ icon("external", "w-[13px] h-[13px]") }}
+      </a>
+    </footer>
+  </div>
+
+  <div class="fn-pop" x-ref="fnCard" x-cloak role="dialog" x-bind:aria-label="fnAria" aria-label="Footnote"
+       x-bind:class="fnClass" x-bind:style="fnStyle"
+       x-on:keydown.escape.stop="fnEscape" x-on:keydown.escape.window="fnEscape" x-on:click.outside="fnClickOutside">
+    <button type="button" class="occ-pop__close fn-pop__close" x-on:click="fnEscape" aria-label="Close footnote">
+      {{ icon("close", "w-[13px] h-[13px]") }}
+    </button>
+    <div class="fn-pop__body" x-ref="fnBody"></div>
+    <a class="fn-pop__go" x-bind:href="fnHref" x-on:click="fnClose" href="#">Go to footnotes</a>
+  </div>
+
+</article>

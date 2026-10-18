@@ -1,0 +1,20 @@
+[
+  {
+    "family": "inter",
+    "noticeSource": "https://raw.githubusercontent.com/rsms/inter/353b61b9f4430d5f420d56605a6e7993e0941470/LICENSE.txt",
+    "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a",
+    "scope": "Upstream font family license notice; existing WOFF2 files were already bundled by the application."
+  },
+  {
+    "family": "dm-mono",
+    "noticeSource": "https://raw.githubusercontent.com/google/fonts/47d54ca1ebb14fd864695f1d39dc734f39017c33/ofl/dmmono/OFL.txt",
+    "sha256": "2bada5ea45c3c63b7f1ea1f88ce9672c9e4f0c42b2c3b7378949084fe55a3066",
+    "scope": "Upstream font family license notice; existing WOFF2 files were already bundled by the application."
+  },
+  {
+    "family": "cooper-hewitt",
+    "noticeSource": "https://raw.githubusercontent.com/cooperhewitt/cooperhewitt-typeface/f37527d993310637d435639f04b0d947fefc6c60/files/-CooperHewitt-OFL-201406.txt",
+    "sha256": "ec73825de7583c79077547520c3ebf0e2774fdbc9f8cfa75f98caf81d850e2b6",
+    "scope": "Upstream font family license notice; existing WOFF2 files were already bundled by the application."
+  }
+]

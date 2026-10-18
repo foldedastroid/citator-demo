@@ -1,16 +1,16 @@
-/*
-First-visit hint on the header's "About this citator" link: a small
-callout under the link until it is dismissed, the link is followed, or
-the About page is opened. Remembered in localStorage.
 
-Usage (layouts/base.njk):
-  <div x-data="aboutHint" class="about-hint">
-    <a href="/about/" x-bind:class="hintLinkClass" x-on:click="dismiss">…</a>
-    <div x-show="open" x-cloak class="about-hint__bubble">
-      … <button x-on:click="dismiss">…</button>
-    </div>
-  </div>
-*/
+
+
+
+
+
+
+
+
+
+
+
+
 const ABOUT_SEEN_KEY = 'citator-about-seen';
 
 document.addEventListener('alpine:init', () => {
@@ -26,7 +26,7 @@ document.addEventListener('alpine:init', () => {
       try {
         localStorage.setItem(ABOUT_SEEN_KEY, '1');
       } catch (e) {
-        // storage unavailable: the hint simply shows again next time
+
       }
     },
 

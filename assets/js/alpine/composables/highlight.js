@@ -1,13 +1,20 @@
-/*
-Scroll an element into view and flash it with a CSS animation class. The
-class is removed and re-added around a forced reflow so the animation
-restarts on a repeat call to the same element.
-*/
+
+
+
+
+
+
+
+
 const HIGHLIGHT_MS = 3000;
+
+function scrollBehavior() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+}
 
 function highlightElement(el, className, { block = 'center' } = {}) {
   if (!el) return;
-  el.scrollIntoView({ behavior: 'smooth', block });
+  el.scrollIntoView({ behavior: scrollBehavior(), block });
   el.classList.remove(className);
   void el.offsetHeight;
   el.classList.add(className);

@@ -42,7 +42,6 @@ from taxonomy import (
 
 UNKNOWN_LEVEL = 99
 LOWEST_LEVEL = 4
-# grid column of the lowest court; column 1 holds the time axis, 2 a spacer
 FIRST_COURT_COLUMN = 3
 
 Link = dict[str, Any]
@@ -96,15 +95,12 @@ class AppellateHistory:
     ) -> None:
         self.ds = ds
         self.index = ds.opinion_index
-        # cited → citing → links, and citing → cited → links
         self.above: dict[int, dict[int, list[Link]]] = {}
         self.below: dict[int, dict[int, list[Link]]] = {}
-        # decision → direct-history acts a later opinion reports on it
         self.reported: dict[int, list[JsonDict]] = {}
         self._index_direct_history(ds.edges)
         self._index_reported(cited_by_by_cluster)
 
-    # ── indexes ────────────────────────────────────────────────────────
     def _index_direct_history(self, edges: list[JsonDict]) -> None:
         for edge in edges:
             if direction_for(edge["treatment"]) != "Direct History":
@@ -145,18 +141,16 @@ class AppellateHistory:
                     }
                 )
 
-    # ── nodes ──────────────────────────────────────────────────────────
     def _opinion_node(self, cluster_id: int, role: str) -> Node:
         op = self.index[cluster_id]
         return {
-            "role": role,  # self | above | below
+            "role": role,
             "cluster_id": cluster_id,
             "case_name": op["case_name"],
             "court": self.ds.court_display.get(op["court"], op["court"]),
             "court_id": op["court"],
             "level": self.ds.court_level.get(op["court"], UNKNOWN_LEVEL),
             "date_filed": op["date_filed"],
-            # shown behind the card's "Details" toggle
             "docket_number": op.get("docket_number") or "",
             "citations": op.get("citations") or [],
             "url": f"/opinion/{cluster_id}/",
@@ -185,7 +179,6 @@ class AppellateHistory:
             return "Intermediate appellate court"
         return "Trial court"
 
-    # ── the graph ──────────────────────────────────────────────────────
     def graph(self, cid: int) -> JsonDict:
         """Nodes, edges and grid layout for the chain `cid` belongs to."""
         builder = _GraphBuilder(self, cid)
@@ -337,8 +330,6 @@ class _GraphBuilder:
                         "acting_case": row["acting_case"],
                         "court": acting_name or "Court not identified",
                         "court_id": acting_id,
-                        # the report cannot precede the act, so the reporting
-                        # opinion's date places it in time
                         "date_filed": row["citing_date_filed"],
                         "url": (
                             f"/opinion/{row['citing_cluster_id']}/"
@@ -365,8 +356,6 @@ class _GraphBuilder:
             ),
         )
         for (at, reporter), entry in ordered:
-            # the same decision can sit in the source data twice (same name,
-            # same day), so a reporting opinion is keyed by name and date
             who = (entry["node"]["case_name"], entry["node"]["date_filed"])
             card = cards.get(who)
             links = [
@@ -388,7 +377,6 @@ class _GraphBuilder:
                 {"actor": card["idx"], "target": at, "links": links}
             )
 
-    # ── layout ─────────────────────────────────────────────────────────
     def _place_unknown_levels(self) -> None:
         """A node with no opinion behind it is placed from its neighbours:
         a decision below sits one level under the decision that reviewed
@@ -464,8 +452,6 @@ class _GraphBuilder:
                     )
                 }
             )
-        # court columns: the time axis takes column 1 and a spacer column
-        # 2; the lowest court sits in column 3, the highest at the right
         level_numbers = sorted({n["level"] for n in nodes}, reverse=True)
         levels = [
             {
@@ -477,14 +463,11 @@ class _GraphBuilder:
             }
             for i, lv in enumerate(level_numbers)
         ]
-        # two rungs can share a name; the one to the left is the lower one
         for lower, upper in zip(levels, levels[1:], strict=False):
             if lower["label"] == upper["label"]:
                 lower["label"] = "Lower court"
         col_of = {lv["level"]: lv["col"] for lv in levels}
         tier_of = {lv["level"]: lv["label"] for lv in levels}
-        # decision rows: odd rows, newest at the top, a connector row
-        # between each pair
         n = len(sequence)
         row_of = {i: (n - 1 - pos) * 2 + 1 for pos, i in enumerate(sequence)}
         previous = {

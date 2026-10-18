@@ -1,0 +1,591 @@
+@layer components {
+  .panel-view:not(.is-current) {
+    display: none;
+  }
+  .app-panel__inner:not(:has(.panel-view.is-current)) > .panel-view[data-view="opinion"] {
+    display: block;
+  }
+  .panel-view.is-current {
+    animation: panel-view-in 160ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  @keyframes panel-view-in {
+    from {
+      opacity: 0;
+    }
+  }
+  .panel-view__back {
+    @apply -ml-1 mb-2 inline-flex h-6 items-center gap-1 rounded-control pl-0.5 pr-1.5 text-xs font-medium text-greyscale-600 transition-colors duration-feedback ease-standard hover:bg-greyscale-100 hover:text-greyscale-900;
+  }
+  .panel-view__back-icon {
+    @apply h-3 w-3 rotate-180;
+  }
+  .panel-view__link {
+    @apply -ml-1.5 mt-4 inline-flex h-6 items-center gap-1 rounded-control px-1.5 text-xs font-medium text-primary-600 transition-colors duration-feedback ease-standard hover:bg-greyscale-100 hover:text-primary-700;
+  }
+  .panel-view__back:active,
+  .panel-view__link:active {
+    @apply bg-greyscale-100;
+    transform: translateY(1px);
+  }
+  .narrow__group {
+    @apply mt-3 border-t border-greyscale-200 pt-2.5;
+  }
+  .narrow__title {
+    @apply m-0 mb-1 text-[11px] font-medium text-greyscale-500;
+  }
+  .narrow__rows {
+    @apply m-0 grid list-none gap-px p-0;
+  }
+  .narrow__row {
+    @apply -mx-1.5 flex min-h-target items-center justify-between gap-3 rounded-control px-1.5 text-xs text-greyscale-700 no-underline;
+  }
+  a.narrow__row {
+    @apply transition-colors duration-feedback ease-standard hover:bg-greyscale-100 hover:text-greyscale-900;
+  }
+  a.narrow__row:active {
+    @apply bg-greyscale-100;
+    transform: translateY(1px);
+  }
+  a.narrow__row.is-current {
+    @apply bg-greyscale-100 font-medium text-greyscale-900;
+  }
+  @media (forced-colors: active) {
+    a.narrow__row.is-current {
+      outline: 1px solid Highlight;
+    }
+  }
+  .narrow__row--all {
+    @apply mb-1;
+  }
+  .narrow__row--empty {
+    @apply text-greyscale-500;
+  }
+  .narrow__row--empty .narrow__mark {
+    @apply opacity-40;
+  }
+  .narrow__row--key {
+    @apply mx-0 items-baseline px-0 py-0.5;
+  }
+  .narrow__label {
+    @apply flex min-w-0 items-center gap-2;
+  }
+  .narrow__text {
+    @apply truncate;
+  }
+  .narrow__mark {
+    @apply h-3 w-3 flex-shrink-0 self-center;
+  }
+  .narrow__n {
+    @apply flex-shrink-0 text-[11px] tabular-nums text-greyscale-500;
+  }
+  a.narrow__row.is-current .narrow__n {
+    @apply text-greyscale-700;
+  }
+  .narrow__note {
+    @apply min-w-0 text-right text-[11px] text-greyscale-600;
+  }
+  .narrow__hint {
+    @apply m-0 mt-2 text-[11px] leading-snug text-greyscale-500;
+  }
+  .analysis-card {
+    @apply rounded-popover border border-greyscale-200 bg-white p-4;
+  }
+  .cite-chart {
+    @apply mb-5 min-w-0 max-w-full;
+  }
+  .cite-chart__head {
+    @apply flex min-h-control flex-wrap items-center justify-between gap-3;
+  }
+  .cite-chart__title {
+    @apply m-0 min-w-0 flex-1 text-xs font-medium text-greyscale-700;
+  }
+  .cite-chart__toggle {
+    @apply -ml-1 inline-flex min-h-control max-w-full items-center gap-1.5 rounded-control px-1 text-left text-xs font-medium text-greyscale-700 transition-colors duration-feedback ease-standard hover:bg-greyscale-100 hover:text-greyscale-900;
+  }
+  .cite-chart__chevron {
+    @apply h-3 w-3 flex-shrink-0 text-greyscale-500;
+    transition: transform 160ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .cite-chart__toggle[aria-expanded="true"] .cite-chart__chevron {
+    transform: rotate(90deg);
+  }
+  .cite-chart__body.is-collapsed,
+  .seg.is-collapsed,
+  .cite-chart .is-hidden {
+    display: none;
+  }
+  .seg {
+    @apply inline-flex flex-shrink-0 rounded-control border border-greyscale-200 bg-greyscale-50 p-px;
+  }
+  .seg__btn {
+    @apply h-7 rounded-control px-2.5 text-[11px] font-medium text-greyscale-600 transition-colors duration-feedback ease-standard hover:text-greyscale-900;
+  }
+  .seg__btn[aria-pressed="true"] {
+    @apply bg-white text-greyscale-900;
+    box-shadow: 0 0 0 1px theme("colors.greyscale.200");
+  }
+  .seg__btn:active {
+    @apply bg-greyscale-100;
+    transform: translateY(1px);
+  }
+  .cite-chart__toolbar {
+    @apply mb-3 mt-2 flex flex-wrap items-center gap-x-3 gap-y-2;
+  }
+  .cite-chart__period {
+    @apply flex items-center gap-2 text-[11px] text-greyscale-600;
+  }
+  .cite-chart__period select {
+    @apply h-7 max-w-full rounded-control border border-greyscale-200 bg-white px-2 text-[11px] text-greyscale-800;
+  }
+  .cite-chart__instruction {
+    @apply m-0 flex-1 text-[11px] text-greyscale-500;
+  }
+  .cite-chart__pan {
+    @apply ml-auto flex flex-shrink-0 gap-1;
+  }
+  .cite-chart__pan button {
+    @apply grid h-8 w-8 place-items-center rounded-control border border-greyscale-200 text-sm text-greyscale-700 hover:bg-greyscale-50 disabled:cursor-default disabled:opacity-40;
+  }
+  .cite-chart__scroll {
+    @apply relative max-w-full overflow-x-auto rounded-control border border-greyscale-200 pb-2;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline-start: 8.75rem;
+  }
+  .cite-chart__scroll:not(.is-current) {
+    display: none;
+  }
+  .cite-chart__body:not(:has(.is-current)) > .cite-chart__scroll[data-axis="court"] {
+    display: block;
+  }
+  .cite-chart__scroll:focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-primary-600;
+  }
+  .cite-chart__table {
+    @apply w-full border-separate text-xs;
+    border-spacing: 0;
+    table-layout: fixed;
+    min-width: calc(8.25rem + var(--chart-columns) * 6.5rem);
+  }
+  .cite-chart__signal-col {
+    width: 8.25rem;
+  }
+  .cite-chart__corner,
+  .cite-chart__col {
+    @apply border-b border-greyscale-200 bg-greyscale-50 px-2 py-2 text-[11px] font-normal leading-tight text-greyscale-600;
+  }
+  .cite-chart__corner {
+    @apply sticky left-0 z-raised border-r border-greyscale-200 text-left;
+  }
+  .cite-chart__total {
+    @apply float-right tabular-nums;
+  }
+  .cite-chart__col {
+    @apply text-center;
+  }
+  .cite-chart__col-label {
+    @apply block;
+    overflow-wrap: anywhere;
+  }
+  .cite-chart__col-total {
+    @apply mt-1 block text-[10px] tabular-nums text-greyscale-500;
+  }
+  .cite-chart__tier {
+    @apply sticky left-0 z-raised whitespace-nowrap border-b border-r border-greyscale-200 bg-white px-2 py-2 text-left font-normal;
+  }
+  .cite-chart__tier-label {
+    @apply flex items-center gap-1.5 text-xs text-greyscale-700;
+  }
+  .cite-chart__row.is-empty .cite-chart__tier-label {
+    @apply text-greyscale-500;
+  }
+  .cite-chart__mark {
+    @apply h-3 w-3 flex-shrink-0;
+  }
+  .cite-chart__tier-n {
+    @apply ml-auto pl-1 text-[11px] tabular-nums text-greyscale-500;
+  }
+  .cite-chart__td {
+    @apply border-b border-greyscale-100 px-2 py-1.5 text-center;
+  }
+  .cite-chart__col--undated,
+  .cite-chart__td--undated {
+    @apply border-l-2 border-greyscale-300;
+  }
+  .cite-chart__cell {
+    @apply grid min-h-control w-full place-items-center rounded-control px-1 text-xs font-medium tabular-nums leading-none no-underline;
+    transition: box-shadow 100ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .cite-chart__cell:hover {
+    box-shadow: 0 0 0 2px white, 0 0 0 3px theme("colors.greyscale.400");
+  }
+  .cite-chart__cell.is-current {
+    box-shadow: 0 0 0 2px white, 0 0 0 3px theme("colors.greyscale.900");
+  }
+  .cite-chart__cell:focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-primary-600;
+    box-shadow: none;
+  }
+  .cite-chart__cell[data-narrow="stop"] {
+    @apply bg-signal-stop text-white;
+  }
+  .cite-chart__cell[data-narrow="warning"] {
+    @apply bg-signal-warning text-greyscale-950;
+  }
+  .cite-chart__cell[data-narrow="caution"] {
+    @apply bg-signal-caution text-greyscale-950;
+  }
+  .cite-chart__cell[data-narrow="positive"] {
+    @apply bg-signal-positive text-white;
+  }
+  .cite-chart__cell[data-narrow="neutral"] {
+    @apply bg-signal-neutral-ink text-white;
+  }
+  .cite-chart__zero {
+    @apply grid min-h-control place-items-center text-[11px] text-greyscale-500;
+  }
+  .cite-chart__coverage {
+    @apply m-0 mt-2 text-[11px] leading-relaxed text-greyscale-500;
+  }
+  @media (max-width: 639px) {
+    .analysis-card {
+      @apply p-3;
+    }
+    .cite-chart__head {
+      @apply gap-2;
+    }
+    .cite-chart__instruction {
+      @apply basis-full;
+    }
+  }
+  #panel-history,
+  #panel-history > section {
+    @apply min-w-0 max-w-full;
+  }
+  #panel-history .history-scroll {
+    @apply max-w-full overflow-x-auto;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline-start: 8.75rem;
+  }
+  #panel-history .history-chain {
+    @apply min-w-0;
+    grid-template-columns:
+      minmax(4.5rem, max-content) 1rem
+      repeat(var(--history-columns), minmax(9.5rem, 1fr));
+  }
+  @media (max-width: 767px) {
+    #panel-history .history-chain {
+      @apply px-3;
+      grid-template-columns: minmax(0, 1fr);
+    }
+    #panel-history .history-list__item {
+      grid-template-columns: 5.5rem minmax(0, 1fr);
+    }
+  }
+  .history-views__bar {
+    @apply mt-1 flex justify-end;
+  }
+  .history-view:not(.is-current) {
+    display: none;
+  }
+  [x-data="historyViews"]:not(:has(.history-view.is-current)) > .history-view[data-history-view="courts"] {
+    display: block;
+  }
+  .history-view.is-current {
+    animation: panel-view-in 120ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  #panel-history .history-view .history-scroll {
+    @apply mt-3;
+  }
+  .history-view[data-history-view="timeline"] {
+    container: history-timeline / inline-size;
+  }
+  .tl-scroll {
+    @apply mt-3 max-w-full border-y border-greyscale-200;
+    overflow: visible;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline-start: 8.75rem;
+    --tl-gutter: 7.5rem;
+    --tl-band: 3.5rem;
+  }
+  .tl {
+    @apply relative min-w-[34rem] pb-1 pt-6;
+    padding-left: var(--tl-gutter);
+    padding-right: 1rem;
+  }
+  .tl--short {
+    @apply pb-12;
+  }
+  .tl__bands {
+    @apply m-0 list-none p-0;
+    margin-left: calc(var(--tl-gutter) * -1);
+    margin-right: -1rem;
+  }
+  .tl__band {
+    @apply relative flex items-center border-b border-greyscale-100 bg-greyscale-50 pl-3;
+    height: var(--tl-band);
+  }
+  .tl__band:nth-child(even) {
+    @apply bg-white;
+  }
+  .tl__band:first-child {
+    @apply border-t;
+  }
+  .tl__band-label {
+    @apply text-[11px] leading-tight text-greyscale-500;
+    width: calc(var(--tl-gutter) - 1rem);
+  }
+  .tl__track {
+    @apply absolute;
+    top: 1.5rem;
+    left: var(--tl-gutter);
+    right: 1rem;
+    height: calc(var(--tl-bands) * var(--tl-band));
+  }
+  .tl__lines {
+    @apply absolute inset-0 h-full w-full overflow-visible;
+  }
+  .tl__lines line {
+    stroke: theme("colors.greyscale.400");
+    stroke-width: 1;
+  }
+  .tl__nodes {
+    @apply absolute inset-0 m-0 list-none p-0;
+  }
+  .tl__item {
+    @apply absolute h-0 w-0;
+    left: var(--x);
+    top: calc(var(--band) * var(--tl-band) + var(--tl-band) / 2);
+  }
+  .tl__node {
+    @apply absolute grid h-5 w-5 place-items-center rounded-full border border-greyscale-400 bg-white text-[11px] font-medium leading-none text-greyscale-700 no-underline transition-colors duration-feedback ease-standard hover:border-greyscale-900 hover:text-greyscale-900;
+    left: -0.625rem;
+    top: -0.625rem;
+  }
+  .tl__node:active {
+    transform: scale(0.94);
+  }
+  .tl__node:focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-primary-600;
+  }
+  .tl__item.is-self .tl__node {
+    @apply border-greyscale-900 bg-greyscale-900 text-white;
+    box-shadow: 0 0 0 4px theme("colors.greyscale.200");
+  }
+  .tl__item.is-reported .tl__node {
+    @apply border-dashed;
+  }
+  .tl__dot {
+    @apply inline-block h-2 w-2 flex-shrink-0 rounded-full bg-signal-neutral;
+  }
+  .tl__dot[data-tier="stop"] {
+    @apply bg-signal-stop;
+  }
+  .tl__dot[data-tier="warning"] {
+    @apply bg-signal-warning;
+  }
+  .tl__dot[data-tier="caution"] {
+    @apply bg-signal-caution;
+  }
+  .tl__dot[data-tier="positive"] {
+    @apply bg-signal-positive;
+  }
+  .tl__dot--on-node {
+    @apply absolute -bottom-0.5 -right-0.5 border border-white;
+  }
+  .tl__here {
+    @apply pointer-events-none absolute whitespace-nowrap text-[11px] font-medium leading-none text-greyscale-900;
+    bottom: 1.125rem;
+    left: 0;
+    transform: translateX(-50%);
+  }
+  .tl__label {
+    @apply pointer-events-none absolute whitespace-nowrap text-[11px] leading-none text-greyscale-600;
+    left: 1.125rem;
+    top: -0.3rem;
+  }
+  .tl__label--flip {
+    left: auto;
+    right: 1.125rem;
+  }
+  .tl__item.is-self .tl__label {
+    left: 1.5rem;
+  }
+  .tl__item.is-self .tl__label--flip {
+    left: auto;
+    right: 1.5rem;
+  }
+  .tl__card {
+    @apply pointer-events-none invisible absolute z-popover w-56 rounded-popover border border-line-pop bg-white px-3 py-2 text-left opacity-0 shadow-overlay;
+    top: 1rem;
+    left: 0;
+    transform: translateX(-50%);
+    transition: opacity 120ms cubic-bezier(0.2, 0, 0, 1), visibility 0s linear 120ms;
+  }
+  .tl__card--above {
+    top: auto;
+    bottom: 1rem;
+  }
+  .tl__node:hover ~ .tl__card,
+  .tl__node:focus-visible ~ .tl__card {
+    @apply visible opacity-100;
+    transition: opacity 120ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .tl__card-meta {
+    @apply m-0 text-[11px] text-greyscale-500;
+  }
+  .tl__card-case {
+    @apply m-0 mt-0.5 text-xs font-medium leading-snug text-greyscale-900;
+  }
+  .tl__card-act {
+    @apply m-0 mt-1 flex items-center gap-1.5 text-xs text-greyscale-700;
+  }
+  .tl__card-note {
+    @apply m-0 mt-1 text-[11px] leading-snug text-greyscale-500;
+  }
+  .tl__axis {
+    @apply relative h-6;
+    margin-top: 0.25rem;
+  }
+  .tl__tick {
+    @apply absolute top-1 whitespace-nowrap text-[11px] tabular-nums leading-none text-greyscale-500;
+    left: var(--x);
+    transform: translateX(-50%);
+    padding-top: 0.375rem;
+  }
+  .tl__tick::before {
+    @apply absolute left-1/2 top-0 h-1 w-px bg-greyscale-300;
+    content: "";
+  }
+  .tl__row {
+    display: none;
+  }
+  .tl-undated {
+    @apply mt-4 border-t border-greyscale-200 pt-3;
+  }
+  .tl-undated__title {
+    @apply m-0 text-xs font-medium text-greyscale-700;
+  }
+  .tl-undated__note {
+    @apply m-0 mt-1 text-[11px] text-greyscale-500;
+  }
+  .tl-undated__list {
+    @apply m-0 mt-2 list-none p-0;
+  }
+  .tl-undated__item {
+    @apply grid gap-x-3 py-2;
+    grid-template-columns: 1.25rem minmax(0, 1fr);
+  }
+  .tl-undated .tl__row-node {
+    @apply grid h-5 w-5 place-items-center rounded-full border border-greyscale-400 bg-white text-[11px] font-medium leading-none text-greyscale-700;
+  }
+  .tl-undated .tl__row-meta {
+    @apply m-0 text-[11px] leading-5 text-greyscale-500;
+  }
+  .tl-undated .tl__row-act,
+  .tl-undated .tl__row-case {
+    @apply m-0 mt-0.5 text-xs text-greyscale-700;
+  }
+  .tl-key {
+    @apply m-0 mt-2 flex list-none flex-wrap gap-x-5 gap-y-1 p-0 text-[11px] leading-snug text-greyscale-700;
+  }
+  .tl-key li {
+    @apply flex items-center gap-1.5;
+  }
+  .tl-key__labels {
+    @apply text-greyscale-500;
+  }
+  @container history-timeline (max-width: 36rem) {
+    .tl-scroll {
+      @apply overflow-visible border-0;
+    }
+    .tl {
+      @apply min-w-0 p-0;
+    }
+    .tl__bands,
+    .tl__lines,
+    .tl__axis,
+    .tl__node,
+    .tl__here,
+    .tl__label,
+    .tl__card {
+      display: none;
+    }
+    .tl__track,
+    .tl__nodes,
+    .tl__item {
+      @apply static h-auto w-auto;
+    }
+    .tl__nodes {
+      @apply relative overflow-y-auto;
+      max-height: calc(100vh - var(--topbar-h) - 4rem);
+      overscroll-behavior-y: contain;
+    }
+    .tl__nodes::before {
+      @apply absolute bottom-3 top-3 w-px bg-greyscale-200;
+      content: "";
+      left: 0.625rem;
+    }
+    .tl__row {
+      @apply relative grid gap-x-3 py-2.5;
+      grid-template-columns: 1.25rem minmax(0, 1fr);
+    }
+    .tl__row-node {
+      @apply grid h-5 w-5 place-items-center rounded-full border border-greyscale-400 bg-white text-[11px] font-medium leading-none text-greyscale-700;
+    }
+    .tl__item.is-self .tl__row-node {
+      @apply border-greyscale-900 bg-greyscale-900 text-white;
+      box-shadow: 0 0 0 3px theme("colors.greyscale.200");
+    }
+    .tl__item.is-reported .tl__row-node {
+      @apply border-dashed;
+    }
+    .tl__row-meta {
+      @apply m-0 text-[11px] leading-5 text-greyscale-500;
+    }
+    .tl__row-here {
+      @apply ml-2 font-medium text-greyscale-900;
+    }
+    .tl__row-act {
+      @apply m-0 mt-0.5 flex items-center gap-1.5 text-xs text-greyscale-800;
+    }
+    .tl__row-case {
+      @apply m-0 mt-0.5 text-xs leading-snug text-greyscale-600;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .panel-view.is-current,
+    .history-view.is-current {
+      animation: none;
+    }
+    .tl__card,
+    .tl__node {
+      transition: none !important;
+    }
+    .tl__node:active {
+      transform: none;
+    }
+    .cite-chart__chevron,
+    .cite-chart__cell,
+    .narrow__row,
+    .seg__btn {
+      transition: none;
+    }
+    .cite-chart__cell:active,
+    .cite-chart__toggle:active,
+    .seg__btn:active,
+    a.narrow__row:active,
+    .panel-view__back:active,
+    .panel-view__link:active {
+      transform: none;
+    }
+  }
+  @media (forced-colors: active) {
+    .cite-chart__cell,
+    .cite-chart__cell.is-current,
+    a.narrow__row.is-current,
+    .seg__btn[aria-pressed="true"] {
+      outline: 2px solid Highlight;
+    }
+  }
+}

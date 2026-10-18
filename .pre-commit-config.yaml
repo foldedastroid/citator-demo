@@ -16,6 +16,7 @@ repos:
      - id: detect-private-key
      - id: fix-byte-order-marker
      - id: trailing-whitespace
+       exclude: ^assets/fonts/.+/OFL\.txt$
        args: [--markdown-linebreak-ext=md]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

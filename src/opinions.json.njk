@@ -1,0 +1,10 @@
+---
+permalink: /assets/opinions.json
+eleventyExcludeFromCollections: true
+---
+{# #}
+{%- set rows = [] -%}
+{%- for c in index -%}
+  {%- set rows = (rows.push({"t": c.case_name, "d": c.court_display ~ (" · " ~ c.citations[0] if c.citations | length else ""), "k": c.citations | join(" ") ~ " " ~ c.docket_numbers | join(" "), "u": "/opinion/" ~ c.cluster_id ~ "/", "s": (c.summary | worstSignal | lower) or "neutral"}), rows) -%}
+{%- endfor -%}
+{{ rows | dump | safe }}

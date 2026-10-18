@@ -2,26 +2,29 @@
 layout: layouts/base.njk
 title: About this citator
 permalink: /about/
+articleLayout: true
+scripts:
+  - /assets/js/article-navigation.js
 ---
-{# What the preview is, what it holds (counts from _data/scope.json), how
-   to read it, and where feedback helps. The treatment table comes from
-   _data/treatments.json so it cannot drift from the taxonomy. #}
+
+
 {% from "macros/treatment.njk" import severityBadge %}
 {% from "macros/icons.njk" import icon %}
-{% set FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfUjYrLNcfBMNeXV6wviUF9jD1pMw_dRADiKGya2idl--vhwg/viewform?usp=header" %}
 
-<article class="prose-about">
 
-  <header class="mb-10">
-    <h1 class="text-display-sm font-semibold text-greyscale-900 leading-tight">About this citator</h1>
-    <p class="mt-3 text-md text-greyscale-700 leading-relaxed">
+<div class="article-page">
+<article class="prose-about" data-article-content>
+
+  <header class="about-hero">
+    <h1 id="article-top" class="m-0 leading-tight">About this citator</h1>
+    <p class="about-lede">
       A preview of a new
       <a href="https://github.com/freelawproject" class="links" target="_blank" rel="noopener">open-source</a>
       citator from
       <a href="https://free.law/" class="links" target="_blank" rel="noopener">Free Law Project</a>.
       The citator reads each opinion with care and, for every treatment, shows the passage behind it and the reasoning that led to it, so you can weigh a treatment at a glance.
     </p>
-    <p class="mt-4 text-md text-greyscale-700 leading-relaxed">
+    <p class="about-lede">
       This page explains what the preview covers, how to read it, and
       <a href="#feedback" class="links">where your feedback helps most</a>.
     </p>
@@ -30,7 +33,7 @@ permalink: /about/
     </p>
   </header>
 
-  <section class="about-section">
+  <section class="about-section" id="what-is">
     <h2>What is a citator</h2>
     <p>
       A citator surfaces how a court opinion has been treated by other opinions — reversed, overruled, criticized, distinguished, or simply cited. A citator is used to determine whether a case is still good law before relying on it.
@@ -41,26 +44,27 @@ permalink: /about/
     </p>
   </section>
 
-  <section class="about-section">
+  <section class="about-section about-section--tinted" id="scope">
     <h2>What's in this preview</h2>
     <p>
-      The preview is built around {{ scope.anchors }} anchor opinions, spanning the court systems — from the Supreme Court of the United States down to a state surrogate's court, and from {{ scope.anchor_earliest_year }} to {{ scope.anchor_latest_year }}. Around each anchor sit the cases it cites and the cases that cite it.
+      The preview contains {{ scope.anchors }} anchor opinions and the available records of the cases they cite or are cited by.
     </p>
-    <dl class="stat-grid">
-      <div class="stat-card">
-        <dt>Opinions</dt>
-        <dd class="stat-card__value">{{ scope.opinions_display }}</dd>
-        <dd class="stat-card__note">{{ scope.anchors }} anchors, {{ scope.authorities_display }} cases they cite, and {{ scope.citing_display }} later opinions that cite an anchor. Only citing opinions that come from courts whose decisions control or equal the anchor are presented.</dd>
+    <dl class="m-0 mt-6 grid gap-4 sm:grid-cols-2">
+      <div class="flex min-w-0 flex-col rounded-popover border border-primary-100 bg-primary-50 p-5 sm:p-6">
+        <dt class="text-xs font-medium text-greyscale-600">Opinions</dt>
+        <dd class="m-0 mt-3 font-cooper text-4xl font-medium leading-none tabular-nums text-primary-600">{{ scope.opinions_display }}</dd>
+        <dd class="m-0 mt-4 text-sm leading-relaxed text-greyscale-700">{{ scope.anchors }} anchors, {{ scope.authorities_display }} cited cases and {{ scope.citing_display }} later opinions.</dd>
       </div>
-      <div class="stat-card">
-        <dt>Courts</dt>
-        <dd class="stat-card__value">{{ scope.courts }}</dd>
-        <dd class="stat-card__note">Federal and state, trial through courts of last resort.</dd>
+      <div class="flex min-w-0 flex-col rounded-popover border border-greyscale-200 bg-white p-5 sm:p-6">
+        <dt class="text-xs font-medium text-greyscale-600">Courts</dt>
+        <dd class="m-0 mt-3 font-cooper text-4xl font-medium leading-none tabular-nums text-primary-600">{{ scope.courts }}</dd>
+        <dd class="m-0 mt-4 text-sm leading-relaxed text-greyscale-700">Federal and state courts, from trial courts to courts of last resort.</dd>
       </div>
     </dl>
+    <p class="text-sm">In this preview, citing opinions are limited to courts whose decisions control or equal the anchor.</p>
   </section>
 
-  <section class="about-section">
+  <section class="about-section" id="navigating">
     <h2>Finding your way around</h2>
 
     <h3>The opinion list</h3>
@@ -86,7 +90,7 @@ permalink: /about/
     </p>
   </section>
 
-  <section class="about-section">
+  <section class="about-section" id="signals">
     <h2>How to read a treatment</h2>
 
     <h3>Severity tiers</h3>
@@ -98,8 +102,10 @@ permalink: /about/
       <dd>Partially weakened but not entirely overturned.</dd>
       <dt>{{ severityBadge("Caution", "Caution") }}</dt>
       <dd>Intact but applicability is qualified.</dd>
+      <dt>{{ severityBadge("Positive", "Positive") }}</dt>
+      <dd>Followed by a later court, or affirmed on appeal.</dd>
       <dt>{{ severityBadge("Neutral", "Neutral") }}</dt>
-      <dd>Stands; the citation is informational or procedural, or the case was affirmed on appeal.</dd>
+      <dd>Stands; the citation is informational or procedural.</dd>
     </dl>
 
     <h3>Later courts, On appeal and Disposition</h3>
@@ -130,7 +136,7 @@ permalink: /about/
       <p class="mt-3 text-sm text-greyscale-600 leading-relaxed">
         Hover over any treatment for its definition. Each definition is written from the page you are on: <em>this case</em> is the opinion you are looking at, whether it applied the treatment or received it. The definitions below read as if this case received the treatment.
       </p>
-      <div class="table-wrap">
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Treatment definitions">
         <table class="about-table">
           <thead>
             <tr><th class="w-1/5">Severity</th><th class="w-2/5">On appeal</th><th class="w-2/5">Later courts</th></tr>
@@ -152,13 +158,13 @@ permalink: /about/
     </details>
   </section>
 
-  <section class="about-section">
+  <section class="about-section about-section--tinted" id="production">
     <h2>Preview vs. production</h2>
     <p>
       The preview is deliberately scoped — running it as a standalone site lets us validate the citator design and user experience, and gather expert feedback on its classifications, before committing to a full CourtListener integration.
     </p>
     <p>Several things will look different in production:</p>
-    <div class="table-wrap">
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Preview and production comparison">
       <table class="about-table">
         <thead>
           <tr><th class="w-1/5">Aspect</th><th class="w-2/5">In this preview</th><th class="w-2/5">In production (CourtListener)</th></tr>
@@ -208,27 +214,27 @@ permalink: /about/
     </div>
   </section>
 
-  <section class="start-panel" aria-labelledby="get-started">
-    <h2 id="get-started" class="text-display-sm font-semibold text-greyscale-900 leading-tight">Ready to try it?</h2>
-    <p class="mt-3 text-md text-greyscale-700 leading-relaxed">
-      Open an anchor opinion and work through its tabs.
-    </p>
-    <a href="/" class="start-panel__button">
-      Get started
+  <section class="start-panel" id="start" aria-labelledby="get-started">
+    <div>
+      <h2 id="get-started">Get started</h2>
+      <p class="about-lede">Open an anchor opinion and work through its tabs.</p>
+    </div>
+    <a href="{{ site.home }}" class="start-panel__button">
+      Browse opinions
       {{ icon("arrow-right", "w-4 h-4") }}
     </a>
   </section>
 
   <section id="feedback" class="feedback-panel">
-    <h2 class="text-display-sm font-semibold text-greyscale-900 leading-tight">Share your feedback</h2>
-    <p class="mt-3 text-md text-greyscale-700 leading-relaxed">
+    <h2>Share your feedback</h2>
+    <p class="about-lede">
       We want your honest feedback — what's confusing, what's missing, what's wrong.
     </p>
     <p class="mt-3 text-sm text-greyscale-600 leading-relaxed">
       One short form for everyone. If you are a legal professional, also tell us about the treatments and how this compares with the citators you use today. For the best experience, use the preview on a desktop.
     </p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      <a href="{{ FORM_URL }}" target="_blank" rel="noopener" class="feedback-card">
+    <div class="mt-5">
+      <a href="{{ site.feedback }}" target="_blank" rel="noopener" class="feedback-card">
         <span class="feedback-card__title">Open the feedback form →</span>
         <span class="feedback-card__text">About ten minutes; fifteen with the legal professional section.</span>
       </a>
@@ -236,3 +242,21 @@ permalink: /about/
   </section>
 
 </article>
+{% set articleSections = [{"id":"article-top","label":"About this citator"},{"id":"what-is","label":"What is a citator"},{"id":"scope","label":"What's in this preview"},{"id":"navigating","label":"Finding your way around"},{"id":"signals","label":"How to read a treatment"},{"id":"production","label":"Preview vs. production"},{"id":"start","label":"Get started"},{"id":"feedback","label":"Share your feedback"}] %}
+<div class="article-navigation" data-article-navigation>
+  <div class="article-navigation__wrap">
+    <nav class="article-navigation__contents" data-article-contents id="article-contents" aria-label="Article sections" hidden>
+      <p class="article-navigation__heading">On this page</p>
+      <ol role="list" class="article-navigation__list">
+        {% for section in articleSections %}<li><a href="#{{ section.id }}" class="article-navigation__link"{% if loop.first %} aria-current="location"{% endif %}><span aria-hidden="true">0{{ loop.index }}</span><span data-article-section-label>{{ section.label }}</span></a></li>{% endfor %}
+      </ol>
+    </nav>
+    <nav class="article-navigation__pill" aria-label="Article reading position">
+      <span class="article-navigation__progress" role="progressbar" aria-label="Article reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-article-progress><span class="article-navigation__progress-fill"></span></span>
+      <button type="button" class="article-navigation__step" aria-label="Previous article section" data-article-previous disabled>{{ icon("chevron-left", "w-3.5 h-3.5") }}</button>
+      <button type="button" class="article-navigation__toggle" aria-controls="article-contents" aria-expanded="false" data-article-toggle><span class="article-navigation__number" data-article-number>01 / 08</span><span class="article-navigation__label" data-article-label>About this citator</span><span class="article-navigation__percent" aria-hidden="true" data-article-percent>0%</span>{{ icon("chevron-up", "article-navigation__caret") }}</button>
+      <button type="button" class="article-navigation__step" aria-label="Next article section" data-article-next>{{ icon("chevron-right", "w-3.5 h-3.5") }}</button>
+    </nav>
+  </div>
+</div>
+</div>

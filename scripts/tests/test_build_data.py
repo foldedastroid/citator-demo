@@ -60,13 +60,10 @@ def test_group_cited_by_merges_one_citing_opinion() -> None:
     ]
     grouped = {g["citing_cluster_id"]: g for g in group_cited_by(rows)}
     one = grouped[1]
-    # the row speaks with its own applied treatment, but its severity is
-    # the worst of everything it carries
     assert one["treatment"] == "Cited by"
     assert one["severity"] == "Stop"
     assert [p["treatment_past"] for p in one["recognized"]] == ["Overruled"]
     assert one["recognized_filter"] == "Stop"
-    # every treatment but the plain citation gets an evidence card
     assert [c["label"] for c in one["evidence_cards"]] == [
         "Overruled as recognized by"
     ]
@@ -94,8 +91,6 @@ def test_cited_by_cards_cover_neutral_acts_and_affirmances() -> None:
 
 
 def test_cited_by_cards_follow_the_row_order() -> None:
-    # the applied treatment comes first even when a recognized one is
-    # more severe
     rows = [
         row(1, "Overruled as recognized by", "2020-01-01"),
         row(1, "Distinguished by", "2020-01-01"),
@@ -136,7 +131,6 @@ def test_home_status_states() -> None:
     )
     assert unknown["on_appeal"]["state"] == "unknown"
     assert unknown["later_courts"]["state"] == "unknown"
-    # within the collection the citing set is complete, so none is known
     in_collection = home_status(
         {
             **base,
@@ -202,13 +196,30 @@ def test_validate_edge(chain_source: DataSource) -> None:
     assert info.value.kind == "hierarchy"
 
 
+def test_validate_edge_keeps_undated_opinions(
+    chain_source: DataSource,
+) -> None:
+    index = dict(chain_source.opinion_index)
+    levels = chain_source.court_level
+    for missing in ("", None):
+        undated = {**index[1], "date_filed": missing}
+        validate_edge(
+            {
+                "citing_cluster_id": 1,
+                "cited_cluster_id": 2,
+                "treatment": "Cited by",
+            },
+            {**index, 1: undated},
+            levels,
+        )
+
+
 def test_cluster_resolver(chain_source: DataSource) -> None:
     resolver = ClusterResolver(chain_source.opinions, {3: ["99 S. Ct. 1"]})
     assert resolver.resolve({"cited_cluster_id": 3}) == 3
     assert resolver.resolve({"citations": ["2 U.S. 1, 5"]}) == 2
     assert resolver.resolve({"citations": ["99 S. Ct. 1"]}) == 3
     assert resolver.resolve({"name": "People v. Roe"}) == 4
-    # "Smith v. Jones" names two decisions in the collection: no match
     assert resolver.resolve({"name": "Smith v. Nobody"}) is None
     assert resolver.resolve({"name": "Nobody v. Anyone"}) is None
 
@@ -282,8 +293,6 @@ def test_self_citation_is_not_an_authority(chain_source: DataSource) -> None:
 def test_authority_cards_follow_the_shared_rule(
     chain_source: DataSource,
 ) -> None:
-    # the same rule as Cited By: a card for every treatment but a plain
-    # citation, applied or recognized, whatever its severity
     opinion = {
         **chain_source.opinions[1],
         "citation_groups": [
@@ -338,8 +347,6 @@ def test_builder_pages(chain_source: DataSource) -> None:
     cited_by = {r["citing_cluster_id"]: r for r in page["cited_by"]}
     assert cited_by[3]["treatment"] == "Reversed by"
     assert cited_by[4]["recognized"][0]["treatment_past"] == "Reversed"
-    # the reversal the California opinion reports is an appeal step, not a
-    # later-court treatment, so it no longer colours the Later courts tier
     assert page["summary"] == {"dh_severity": "Stop", "cr_severity": "Caution"}
     assert page["status"]["on_appeal"]["citing_name"] == "Jones v. Smith"
     assert page["appellate_history"]["n_opinions"] == 3
@@ -366,9 +373,6 @@ def test_write_site_from_fixtures(tmp_path: Path) -> None:
 
 
 def test_status_rows_and_filters_read_the_same_acts() -> None:
-    # the citing opinion affirmed this case itself and reports that another
-    # court vacated it: the vacatur is what happened on appeal, and the
-    # home filter must see the same tier the On appeal row shows
     rows = sort_cited_by(
         group_cited_by(
             [
@@ -423,7 +427,6 @@ def test_order_citations_puts_primary_reporters_first() -> None:
     assert order_citations(
         ["108 A.F.T.R.2d (RIA) 7074", "398 U.S. App. D.C. 134", "661 F.3d 1"]
     ) == ["661 F.3d 1", "398 U.S. App. D.C. 134", "108 A.F.T.R.2d (RIA) 7074"]
-    # the rest keep their order; an empty list is fine
     assert order_citations(["x", "y"]) == ["x", "y"]
     assert order_citations([]) == []
 
@@ -448,8 +451,6 @@ def test_later_courts_lead_prefers_controlling_or_equal_courts() -> None:
         3, "Distinguished by", "2020-01-01", citing_relation="controlling"
     )
     plain = row(4, "Cited by", "2019-01-01", citing_relation="controlling")
-    # the most negative from a controlling or equal court leads, whichever
-    # of the two it comes from
     assert lead(group_cited_by([worst_other, equal, controlling, plain])) == (
         "Limited by",
         2,
@@ -460,13 +461,11 @@ def test_later_courts_lead_prefers_controlling_or_equal_courts() -> None:
         3,
         3,
     )
-    # otherwise the most negative of all
     assert lead(group_cited_by([worst_other, plain])) == (
         "Overruled as recognized by",
         1,
         2,
     )
-    # the home filter reads the same lead
     assert (
         cited_by_severities(
             sort_cited_by(group_cited_by([worst_other, equal, controlling]))

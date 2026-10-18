@@ -19,11 +19,6 @@ from cl_html import TAG_RE, plain_text
 from data_source import JsonDict
 from taxonomy import SEVERITY_BY_TREATMENT, to_active_voice
 
-# ── Authority names ──────────────────────────────────────────────────────
-# A procedural tag the extractor appends to an unnamed order ("Troppi v
-# Scarf (leave denied)"). The row shows the case name only; the court,
-# date and cite tell the orders apart. Disambiguators naming a distinct
-# decision ("(No. 1)", "(Hauck II)") are kept.
 ROLE_PARENTHETICAL_RE = re.compile(
     r"\s*\((?:"
     r"cert(?:iorari)?\.?\s*(?:granted|denied|dismissed|grant|denial)|"
@@ -45,22 +40,14 @@ def clean_authority_name(name: str) -> str:
     return ROLE_PARENTHETICAL_RE.sub("", name).strip()
 
 
-# A case reporter citation: volume, reporter, page ("633 F.3d 894", "4
-# Wheat. 316", "263 F. App’x 286"), a slip opinion ("591 U. S. ___"), or
-# a short form cut off at "at" ("82 F.4th at", "465 U. S., at").
 _REPORTER_CITE_RE = re.compile(
     r"^\d+\s+[A-Za-z(][A-Za-z0-9.'’()&\s-]*?,?\s+(?:\d+|_{2,}|at\b)"
 )
-# A case's short name standing alone ("Bruton", "Sattar II", "In re
-# Google", "NFIB v. OSHA"): one to five words, capitalised apart from the
-# connectives, with no digits.
 _SHORT_NAME_RE = re.compile(
     r"^(?:[A-Z][A-Za-z'’.&-]*|v\.|re|of|the|In|ex|rel\.)"
     r"(?: (?:[A-Z][A-Za-z'’.&-]*|v\.|re|of|the|ex|rel\.|II|III|IV|V)){0,4}$"
 )
 _ID_FORM_RE = re.compile(r"^(?:see (?:also )?)?(?:id|ibid)\b|\bsupra\b", re.I)
-# Citations that are not to a case: statutes, regulations, session laws,
-# public laws and law reviews.
 _NON_CASE_CITE_RE = re.compile(
     r"U\. ?S\. ?C\.|§|C\. ?F\. ?R\.|\bStat\.|Fed\. ?Reg\.|Pub\. ?L\."
     r"|L\. ?Rev\.|L\. ?J\.|J\. ?(?:Const|Legal|L)\.|Law Journal",
@@ -87,12 +74,7 @@ def is_case_group(group: JsonDict) -> bool:
     )
 
 
-# ── Dispositions ─────────────────────────────────────────────────────────
-# The treatment form of an order the taxonomy has no label for (a motion
-# decided, a petition dismissed): neutral, with no definition; the pages
-# show the sentence that disposed of the case in its place.
 ORDERED_TREATMENT = "Ordered by"
-# Labels that record no disposition at all.
 _NO_LABEL = frozenset({"", "None", "Other"})
 
 
@@ -139,8 +121,6 @@ def disposition_label(raw: JsonDict | None) -> JsonDict | None:
     }
 
 
-# ── Appellate history: the decision below, acts and courts in prose ──────
-# Words too common to identify a case by.
 _NAME_STOPWORDS = frozenset(
     {
         "v", "vs", "in", "re", "the", "of", "and", "ex", "rel", "et", "al",
@@ -165,7 +145,6 @@ _SCOTUS_RE = re.compile(
     r"(united states|u\.\s?s\.)\s+supreme court"
     r"|supreme court of the united states|\bscotus\b"
 )
-# A reported act with no opinion behind it is placed from its text.
 _SCOTUS_WORDS = (
     "supreme court of the united states",
     "united states supreme court",
@@ -240,10 +219,6 @@ def canonical_court(
     return "", prose
 
 
-# ── Quote → enclosing sentence(s) ─────────────────────────────────────────
-# A treatment's quote is often a fragment ("cert den 415 US 927; …
-# (1974)"). For display and for the in-text jump the site shows the whole
-# sentence(s) around it.
 _QUOTE_NORM_MAP = str.maketrans(
     {
         "‘": "'",
@@ -263,7 +238,6 @@ _QUOTE_NORM_MAP = str.maketrans(
         " ": " ",
     }
 )
-# Words after which a period does not end a sentence in legal prose.
 _ABBREVIATIONS = {
     "v",
     "vs",
@@ -349,7 +323,6 @@ _ABBREVIATIONS = {
     "cal.app",
     "civ",
 }
-# court and reporter tokens that end in a period inside citations
 _CITATION_TOKENS = {
     "miss",
     "ala",
@@ -439,23 +412,16 @@ def _norm_quote(quote: str) -> str:
 
 def _is_sentence_end(text: str, pos: int) -> bool:
     """Is the terminator ending at `pos` (exclusive) a real sentence end?"""
-    # the word before the period
     m = re.search(r"([A-Za-z][\w.'’]*)[.!?][\"'”’)\]]*$", text[:pos])
     after = text[pos:].lstrip()
     if m:
         word = m.group(1).lower().rstrip(".")
-        # a bare "Id." / "Ibid." citation sentence ends where a capitalised
-        # sentence follows it ("Ibid. That is, …"); "Id. at 405" does not
         if word in ("id", "ibid") and after[:1].isupper():
             return True
-        if word in _ABBREVIATIONS or len(word) == 1:  # initials, "J."
+        if word in _ABBREVIATIONS or len(word) == 1:
             return False
-        # an initialism with inner periods ("S.D.", "N.D.", "U.S.", "E.D.")
-        # or a court / reporter token inside a citation parenthetical: no
-        # sentence ends there, whatever follows
         if "." in word or word in _CITATION_TOKENS:
             return False
-    # a period inside a citation ("U. S. 478", "F. 3d") or before a digit
     if not after:
         return True
     if after[0].islower():
@@ -470,7 +436,6 @@ def sentence_bounds(text: str, start: int, end: int) -> tuple[int, int]:
         if _is_sentence_end(text, m.end()):
             s = m.end()
     e = len(text)
-    # a terminator that is the quote's own last character closes it
     for m in _SENTENCE_END_RE.finditer(text, max(start, end - 1)):
         if _is_sentence_end(text, m.end()):
             e = m.end()
@@ -485,8 +450,6 @@ def expand_quote(document: list[dict], quote: str) -> str:
     first 60 / last 40 characters when the model trimmed or altered it."""
     if not quote or isinstance(document, str):
         return quote
-    # A quote that skips text with an ellipsis is several passages: widen
-    # each part on its own and keep the ellipsis between them.
     parts = [
         p.strip() for p in re.split(r"\s*(?:…|\.\.\.)\s*", quote) if p.strip()
     ]
@@ -502,21 +465,13 @@ def expand_quote(document: list[dict], quote: str) -> str:
     ]
     plains = [(plain_text(seg["html"]),) for seg in segments]
     normed = [_norm_with_map(p[0]) for p in plains]
-    # 1. the whole quote
     for (plain,), (norm, mp) in zip(plains, normed):
         idx = norm.find(target)
         if idx >= 0:
             return _sentence_at(plain, mp, idx, len(target))
-    # 2. the longest run of consecutive quote words found anywhere (the
-    #    model trimmed, paraphrased or mis-copied part of it). The run must
-    #    be at least eight words AND cover most of the quote, otherwise a
-    #    common phrase could land the quote in the wrong sentence — then
-    #    the model's own words are shown unchanged.
     words = target.split(" ")
     min_run = max(8, (len(words) + 1) // 2)
-    best = (
-        None  # (n words, word offset in quote, segment index, norm idx, probe)
-    )
+    best = None
     for n in range(len(words), min_run - 1, -1):
         for start in range(0, len(words) - n + 1):
             probe = " ".join(words[start : start + n])
@@ -532,9 +487,6 @@ def expand_quote(document: list[dict], quote: str) -> str:
     if best:
         n, start, k, idx, probe = best
         plain, (norm, mp) = plains[k][0], normed[k]
-        # The anchored run may be only one side of a quote that spans two
-        # sentences: widen to the neighbouring sentence when the quote's
-        # words on that side are found there.
         lead = words[:start][-6:]
         trail = words[start + n :][:6]
         return _sentence_at(plain, mp, idx, len(probe), lead, trail)
@@ -562,8 +514,6 @@ def _sentence_at(
     e = mp[idx + length - 1] + 1
     bs, be = sentence_bounds(plain, s, e)
     if lead and bs > 1:
-        # look back across up to two very short citation sentences
-        # ("Ibid.", "Id., at 405.") to the sentence the quote started in
         probe_end, hops = bs, 0
         while probe_end > 1 and hops < 3:
             prev_s, _ = sentence_bounds(
@@ -586,11 +536,6 @@ def _sentence_at(
     return plain[bs:be].strip()
 
 
-# ── Quote verification ────────────────────────────────────────────────
-# Is a model-supplied quote actually in the opinion? Compared as word
-# tokens (punctuation, spacing and quote styles normalised away), first as
-# a whole, then sentence by sentence for quotes stitched from separate
-# passages with an ellipsis.
 _VERIFY_STAR = re.compile(r"\*\d+")
 _VERIFY_NONWORD = re.compile(r"[^a-z0-9]+")
 

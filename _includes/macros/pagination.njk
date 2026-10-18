@@ -1,0 +1,20 @@
+{% from "macros/icons.njk" import icon %}
+{% macro pagination(label="Opinion results", id="opinion-pages") %}
+<nav id="{{ id }}" class="home-pager" aria-label="{{ label }} pages" aria-describedby="{{ id }}-summary" x-show="hasPages" x-cloak>
+  <div class="home-pager__controls">
+    <button type="button" x-on:click="prevPage" x-bind:disabled="atFirstPage" class="home-pager__btn" aria-label="Previous page">
+      {{ icon("chevron-left", "w-4 h-4") }}<span class="home-pager__direction">Previous</span>
+    </button>
+    <template x-for="item in pageItems" x-bind:key="item.key">
+      <span class="home-pager__item">
+        <button type="button" class="home-pager__btn home-pager__number" x-show="item.isPage" x-bind:data-page="item.page" x-bind:aria-label="item.ariaLabel" x-bind:aria-current="pageCurrent" x-on:click="choosePage" x-text="item.label"></button>
+        <span class="home-pager__ellipsis" x-show="item.isGap" aria-hidden="true">…</span>
+      </span>
+    </template>
+    <button type="button" x-on:click="nextPage" x-bind:disabled="atLastPage" class="home-pager__btn" aria-label="Next page">
+      <span class="home-pager__direction">Next</span>{{ icon("chevron-right", "w-4 h-4") }}
+    </button>
+  </div>
+  <p id="{{ id }}-summary" class="home-pager__label" x-text="pageLabel"></p>
+</nav>
+{% endmacro %}

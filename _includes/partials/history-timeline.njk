@@ -1,0 +1,125 @@
+
+{% set chain = history.chain %}
+{% set bands = history.levels | reverse %}
+{% set letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
+{% set months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] %}
+
+{% set times = [] %}
+{% for step in chain %}{% if step.date_filed %}{% set p = step.date_filed.split("-") %}{% set times = (times.push((p[0] | int) * 12 + (p[1] | int) - 1 + ((p[2] | int) - 1) / 31), times) %}{% endif %}{% endfor %}
+{% set sorted = times | sort %}
+{% set t0 = sorted | first if sorted | length else 0 %}
+{% set t1 = sorted | last if sorted | length else 0 %}
+{% set span = t1 - t0 %}
+{% set pad = (span * 0.08) if span * 0.08 > 4 else 4 %}
+{% set d0 = t0 - pad %}
+{% set width = span + pad * 2 %}
+
+{% set fits = [] %}
+{% for c in [120, 60, 24, 12, 6, 3, 1] %}{% if width / c <= 6 %}{% set fits = (fits.push(c), fits) %}{% endif %}{% endfor %}
+{% set tickStep = fits | last if fits | length else 120 %}
+{% set tickStart = ((d0 / tickStep) | round(0, "ceil")) * tickStep %}
+
+{% set nodes = [] %}
+{% set undated = [] %}
+{% for step in chain %}
+  {% if step.date_filed %}{% set p = step.date_filed.split("-") %}{% set t = (p[0] | int) * 12 + (p[1] | int) - 1 + ((p[2] | int) - 1) / 31 %}{% set x = (t - d0) / width * 100 %}
+  {% else %}{% set x = 0 %}{% endif %}
+  {% set band = [] %}{% for lv in bands %}{% if lv.col == step.col %}{% set band = (band.push(loop.index0), band) %}{% endif %}{% endfor %}
+  {% set acts = [] %}{% set firstTier = [] %}
+  {% for act in step.acts %}{% for tr in act.treatments %}{% set acts = (acts.push(tr.text or tr.treatment), acts) %}{% set firstTier = (firstTier.push(tr.severity or "Neutral"), firstTier) %}{% endfor %}{% endfor %}
+  {% set node = {"step": step, "x": x | round(2), "band": band[0] or 0, "letter": letters[loop.index0] or loop.index, "index": loop.index0, "acts": acts, "tier": firstTier[0] or ""} %}
+  {% if step.date_filed %}{% set nodes = (nodes.push(node), nodes) %}{% else %}{% set undated = (undated.push(node), undated) %}{% endif %}
+{% endfor %}
+
+<div class="history-view" data-history-view="timeline" x-bind:class="historyViewClass">
+  {% if nodes | length %}
+  <div class="tl-scroll">
+    <div class="tl{% if bands | length < 2 %} tl--short{% endif %}" style="--tl-bands: {{ bands | length }}">
+      <ul class="tl__bands" role="list" aria-hidden="true">
+        {% for lv in bands %}<li class="tl__band"><span class="tl__band-label">{{ lv.label }}</span></li>{% endfor %}
+      </ul>
+      <div class="tl__track">
+        <svg class="tl__lines" viewBox="0 0 100 {{ bands | length }}" preserveAspectRatio="none" aria-hidden="true">
+          {% for n in nodes %}{% if not loop.first %}{% set prev = nodes[loop.index0 - 1] %}{% if prev.index + 1 == n.index %}<line x1="{{ prev.x }}" y1="{{ prev.band + 0.5 }}" x2="{{ n.x }}" y2="{{ n.band + 0.5 }}" vector-effect="non-scaling-stroke" />{% endif %}{% endif %}{% endfor %}
+        </svg>
+        <ol class="tl__nodes" aria-label="Dated decisions in date order">
+          {% for n in nodes %}
+          {% set step = n.step %}
+          {% set date = step.date_filed | usdate if step.date_filed else "Undated" %}
+          {% set linked = step.url and step.role != "self" and (not pageIds or step.cluster_id in pageIds) %}
+
+          {% set label = n.acts | join("; ") %}
+          {% set aria = [n.letter, date, step.court, step.case_name or "Case name not identified"] %}
+          {% if label %}{% set aria = (aria.push(label), aria) %}{% endif %}
+          {% if step.role == "self" %}{% set aria = (aria.push("this opinion"), aria) %}{% elif step.role == "reported" %}{% set aria = (aria.push("known only from a later opinion"), aria) %}{% endif %}
+          <li class="tl__item{% if step.role == 'self' %} is-self{% elif step.role == 'reported' %} is-reported{% endif %}"
+              style="--x: {{ n.x }}%; --band: {{ n.band }}">
+
+            {% if step.role == "self" %}<span class="tl__here" aria-hidden="true">This opinion</span>{% endif %}
+            {% if linked %}<a href="{{ step.url }}" class="tl__node" aria-label="{{ aria | join(', ') }}">
+            {%- else %}<button type="button" class="tl__node" aria-label="{{ aria | join(', ') }}">{% endif %}
+              <span aria-hidden="true">{{ n.letter }}</span>{% if n.tier %}<i class="tl__dot tl__dot--on-node" data-tier="{{ n.tier | lower }}" aria-hidden="true"></i>{% endif %}
+            {%- if linked %}</a>{% else %}</button>{% endif %}
+            {% if label %}<span class="tl__label" aria-hidden="true">{{ label }}</span>{% endif %}
+            <div class="tl__card" aria-hidden="true">
+              <p class="tl__card-meta"><span class="tabular-nums">{{ date }}</span> · {{ step.court }}</p>
+              {% if step.case_name %}<p class="tl__card-case">{{ step.case_name }}</p>{% endif %}
+              {% if label %}<p class="tl__card-act"><i class="tl__dot" data-tier="{{ n.tier | lower }}"></i>{{ label }}</p>{% endif %}
+              {% if step.role == "reported" %}<p class="tl__card-note">Known only from a later opinion's account of it</p>{% endif %}
+            </div>
+
+            <div class="tl__row">
+              <span class="tl__row-node" aria-hidden="true">{{ n.letter }}</span>
+              <div class="tl__row-body">
+                <p class="tl__row-meta"><span class="tabular-nums">{{ date }}</span> · {{ step.court }}{% if step.role == "self" %}<span class="tl__row-here">This opinion</span>{% endif %}</p>
+                {% if label %}<p class="tl__row-act"><i class="tl__dot" data-tier="{{ n.tier | lower }}" aria-hidden="true"></i>{{ label }}</p>{% endif %}
+                {% if step.case_name %}
+                <p class="tl__row-case">
+                  {% if step.role == "reported" %}As reported by {% endif %}
+                  {% if linked %}<a href="{{ step.url }}" class="history-node__link">{{ step.case_name }}</a>{% else %}{{ step.case_name }}{% endif %}
+                </p>
+                {% endif %}
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+      <div class="tl__axis" aria-hidden="true">
+        {% for t in range(tickStart, d0 + width, tickStep) %}
+        {% set year = (t / 12) | int %}
+        <span class="tl__tick" style="--x: {{ ((t - d0) / width * 100) | round(2) }}%">{{ year if tickStep >= 12 else (months[t - year * 12] ~ " " ~ year) }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% if undated | length %}
+  <section class="tl-undated" aria-label="Undated decisions">
+    <h3 class="tl-undated__title">Date not available</h3>
+    <p class="tl-undated__note">These decisions are not positioned on the time axis.</p>
+    <ol class="tl-undated__list">
+      {% for n in undated %}
+      {% set step = n.step %}
+      {% set linked = step.url and step.role != "self" and (not pageIds or step.cluster_id in pageIds) %}
+      <li class="tl-undated__item">
+        <span class="tl__row-node" aria-hidden="true">{{ n.letter }}</span>
+        <div>
+          <p class="tl__row-meta">{{ step.court }}{% if step.role == "self" %}<span class="tl__row-here">This opinion</span>{% endif %}</p>
+          {% if n.acts | length %}<p class="tl__row-act"><i class="tl__dot" data-tier="{{ n.tier | lower }}" aria-hidden="true"></i>{{ n.acts | join("; ") }}</p>{% endif %}
+          {% if step.case_name %}<p class="tl__row-case">{% if step.role == "reported" %}As reported by {% endif %}{% if linked %}<a href="{{ step.url }}" class="history-node__link">{{ step.case_name }}</a>{% else %}{{ step.case_name }}{% endif %}</p>{% endif %}
+          {% if step.role == "reported" %}<p class="tl__card-note">Known only from a later opinion’s account</p>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+  {% if historyKey | length %}
+  <ul class="tl-key" role="list" aria-label="Signal colours">
+    {% for k in historyKey %}
+    <li><i class="tl__dot" data-tier="{{ k.tier | lower }}" aria-hidden="true"></i>{{ k.tier }}<span class="tl-key__labels">{{ k.labels | join(", ") }}</span></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>

@@ -1,0 +1,30 @@
+{% from "macros/icons.njk" import icon %}
+{% from "macros/treatment.njk" import signal %}
+
+
+{% macro caseNode(case, group, url, counts, expand) %}
+{%- set href = "/opinion/" ~ case.cluster_id ~ "/" -%}
+{%- set here = url == href -%}
+{%- set key = group ~ "-" ~ case.cluster_id -%}
+{%- set worst = case.summary | worstSignal -%}
+{%- set n = counts[case.cluster_id] -%}
+{%- set base = "" if here else href -%}
+{%- set open = here and expand -%}
+<li class="tree-item" data-name="{{ case.case_name | lower }} {{ case.court_display | lower }}">
+  <div class="tree-row{% if here %} is-active{% endif %}">
+    <a href="{{ href }}" class="tree-link"{% if here %} aria-current="page"{% endif %} title="{{ case.case_name }}">
+      <span class="tree-signal" title="{{ worst or 'No treatment found' }}">{{ signal(worst or "Neutral", "tree-signal__mark") }}</span>
+      <span class="tree-label">{{ case.case_name }}</span>
+    </a>
+    <button type="button" class="tree-toggle" data-tree-toggle data-tree-key="{{ key }}"{% if open %} data-tree-here="true"{% endif %}
+            aria-expanded="{{ 'true' if open else 'false' }}" aria-controls="tree-{{ key }}" aria-label="Show the views of {{ case.case_name }}">
+      {{ icon("chevron-right", "tree-chevron") }}
+    </button>
+  </div>
+  <ul role="list" class="tree-sub" id="tree-{{ key }}"{% if not open %} hidden{% endif %}>
+    <li><a href="{{ base }}#opinion" class="tree-subrow"{% if open %} data-tab-link="opinion"{% endif %}>Opinion</a></li>
+    <li><a href="{{ base }}#authorities" class="tree-subrow"{% if open %} data-tab-link="authorities"{% endif %}><span class="tree-label">Authorities</span><span class="tree-count">{{ n.authorities if n else 0 }}</span></a></li>
+    <li><a href="{{ base }}#cited-by" class="tree-subrow"{% if open %} data-tab-link="cited-by"{% endif %}><span class="tree-label">Later courts</span><span class="tree-count">{{ n.citedBy if n else 0 }}</span></a></li>
+  </ul>
+</li>
+{%- endmacro %}

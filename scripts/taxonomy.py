@@ -16,37 +16,34 @@ from collections.abc import Iterable
 from typing import Any
 
 SEVERITY_BY_TREATMENT: dict[str, str] = {
-    # Stop
     "Reversed by": "Stop",
     "Reversed and remanded by": "Stop",
     "Vacated by": "Stop",
     "Vacated and remanded by": "Stop",
     "Overruled by": "Stop",
     "Abrogated by": "Stop",
-    # Warning
     "Affirmed in part; Reversed in part by": "Warning",
     "Affirmed in part; Vacated in part by": "Warning",
     "Questioned by": "Warning",
     "Disapproved by": "Warning",
     "Limited by": "Warning",
-    # Caution
     "Remanded by": "Caution",
     "Cert. granted by": "Caution",
     "Criticized by": "Caution",
     "Distinguished by": "Caution",
     "Declined to follow by": "Caution",
-    # Neutral
+    "Affirmed by": "Positive",
+    "Followed by": "Positive",
     "Dismissed by": "Neutral",
     "Cert. denied by": "Neutral",
     "Cited by": "Neutral",
-    "Affirmed by": "Neutral",
 }
 
-# most serious first
 SEVERITY_ORDER: tuple[str, ...] = (
     "Stop",
     "Warning",
     "Caution",
+    "Positive",
     "Neutral",
 )
 SEVERITY_RANK: dict[str, int] = {
@@ -54,7 +51,6 @@ SEVERITY_RANK: dict[str, int] = {
 }
 NEGATIVE_TIERS = frozenset({"Stop", "Warning", "Caution"})
 
-# Procedural review of the same case by a higher court.
 DIRECT_HISTORY_TREATMENTS = frozenset(
     {
         "Reversed by",
@@ -71,14 +67,11 @@ DIRECT_HISTORY_TREATMENTS = frozenset(
     }
 )
 
-# Treatments only a higher court, or the same court, can apply.
 VERTICAL_OR_SELF_TREATMENTS = DIRECT_HISTORY_TREATMENTS | {
     "Overruled by",
     "Abrogated by",
 }
 
-# What the acting opinion does, as the Authorities tab, the disposition
-# and the History tab's cards show it.
 ACTIVE_VOICE: dict[str, str] = {
     "Reversed by": "Reverses",
     "Reversed and remanded by": "Reverses and remands",
@@ -103,18 +96,13 @@ ACTIVE_VOICE: dict[str, str] = {
     "Dismissed by": "Dismisses",
     "Affirmed by": "Affirms",
     "Cert. denied by": "Denies cert.",
+    "Followed by": "Follows",
     "Cited by": "Cites",
 }
 
 RECOGNIZED_SUFFIX = " as recognized by"
 
-# What each treatment means, shown when a pill is hovered or focused.
-# Each is written once, with {actor} for the opinion applying the
-# treatment and {target} for the one receiving it; `definition_lookup`
-# fills the two from the reader's side, so the opinion on the page is
-# always "this case" (see the fillers above that function).
 DEFINITIONS: dict[str, str] = {
-    # Direct History
     "Reversed by": "On direct appeal, {actor} reversed {target}.",
     "Reversed and remanded by": (
         "On direct appeal, {actor} reversed {target} and sent the case "
@@ -152,7 +140,6 @@ DEFINITIONS: dict[str, str] = {
         "On a petition for review, {actor} refused to hear an appeal of "
         "{target}."
     ),
-    # Citing Reference
     "Overruled by": "{actor} expressly overruled all or part of {target}.",
     "Abrogated by": (
         "{actor} effectively, but not explicitly, overruled all or part of "
@@ -187,14 +174,16 @@ DEFINITIONS: dict[str, str] = {
         "{actor} chose not to apply the reasoning or ruling of {target}, "
         "and no more specific treatment applies."
     ),
+    "Followed by": (
+        "{actor} relied on {target} as controlling or persuasive authority "
+        "and applied its reasoning or ruling."
+    ),
     "Cited by": (
         "{actor} cited, referenced, discussed, interpreted, clarified or "
         "explained {target} without treating it negatively."
     ),
 }
 
-# A plain citation: its pill shows no definition and its row no
-# evidence card. Every other treatment shows both.
 PLAIN_CITATION = "Cited by"
 NO_TOOLTIP = frozenset({PLAIN_CITATION})
 
@@ -332,16 +321,10 @@ def row_validation(states: list[str]) -> str:
     return "unverified"
 
 
-# The definitions speak from the reader's side: the opinion on the page
-# is "this case" whichever role it plays, and the other party is named by
-# what it is to this case.
 THIS_CASE = "this case"
 CITED_CASE = "the cited case"
-# the other party when this case received the treatment
 ACTOR_ON_THIS_CASE = {"direct": "another court", "citing": "a later case"}
-# the other party when this case applied the treatment
 TARGET_OF_THIS_CASE = {"direct": "the decision below", "citing": CITED_CASE}
-# the court whose act is only reported, by this case or by a later one
 REPORTED_ACTOR = {"direct": "another court", "citing": "another case"}
 
 

@@ -27,7 +27,8 @@ from taxonomy import (
         ("Questioned as recognized by", "Warning"),
         ("Distinguished by", "Caution"),
         ("Cited by", "Neutral"),
-        ("Affirmed by", "Neutral"),
+        ("Affirmed by", "Positive"),
+        ("Followed by", "Positive"),
         ("Something else", "Other"),
         (None, "Other"),
     ],
@@ -132,25 +133,20 @@ def test_every_treatment_has_a_definition() -> None:
 
 def test_definition_lookup_speaks_from_the_page() -> None:
     lookup = definition_lookup()
-    # this case received the treatment: passive and past-tense forms
     received = "A later case expressly overruled all or part of this case."
     assert lookup["Overruled by"] == received
     assert lookup["Overruled"] == received
-    # this case applied it: the active form
     assert lookup["Overrules"] == (
         "This case expressly overruled all or part of the cited case."
     )
-    # a later case reports the treatment of this case
     assert lookup["Overruled as recognized by"] == (
         "A later case noted that another case expressly overruled all or "
         "part of this case."
     )
-    # this case reports the treatment of a cited case
     assert lookup["Recognizes to be overruled"] == (
         "This case noted that another case expressly overruled all or "
         "part of the cited case."
     )
-    # direct history names a court, and the decision below on the acting side
     assert lookup["Reversed and remanded by"] == (
         "On direct appeal, another court reversed this case and sent the "
         "case back for further proceedings."
@@ -191,7 +187,9 @@ def test_treatment_table_covers_every_label_once() -> None:
         "Stop",
         "Warning",
         "Caution",
+        "Positive",
         "Neutral",
     ]
-    neutral = next(r for r in rows if r["severity"] == "Neutral")
-    assert "Affirmed by" in neutral["direct_history"]
+    positive = next(r for r in rows if r["severity"] == "Positive")
+    assert "Affirmed by" in positive["direct_history"]
+    assert "Followed by" in positive["citing_reference"]

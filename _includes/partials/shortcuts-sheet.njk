@@ -1,0 +1,38 @@
+
+<dialog id="shortcuts" class="sheet shortcuts" aria-labelledby="shortcuts-title">
+  <div class="shortcuts__head">
+    <h2 id="shortcuts-title" class="shortcuts__title">Keyboard shortcuts</h2>
+    <button type="button" class="sheet__esc" data-shortcuts-close aria-label="Close keyboard shortcuts">Esc</button>
+  </div>
+  <div class="shortcuts__body">
+    {% for group in [
+      {"title": "Anywhere", "rows": [
+        {"keys": ["⌘", "\\"], "text": "Show or hide the sidebar"},
+        {"keys": ["?"], "text": "Show these shortcuts"},
+        {"keys": ["Esc"], "text": "Close a popover, menu or dialog"}
+      ]},
+      {"title": "Sidebar", "rows": [
+        {"keys": ["→"], "text": "Open a branch"},
+        {"keys": ["←"], "text": "Close a branch"}
+      ]},
+      {"title": "On an opinion", "rows": [
+        {"keys": ["←", "→"], "text": "Move between tabs when a tab has focus"},
+        {"keys": ["/"], "text": "Search within the opinion"},
+        {"keys": ["↑", "↓"], "text": "Move between parts when the parts rail has focus"},
+        {"keys": ["↓"], "text": "Open a citation's popover and move into it"},
+        {"keys": ["↵"], "text": "Next match in Search within opinion"},
+        {"keys": ["⇧", "↵"], "text": "Previous match in Search within opinion"}
+      ]}
+    ] %}
+    <section class="shortcuts__group" aria-labelledby="shortcuts-{{ loop.index }}">
+      <h3 id="shortcuts-{{ loop.index }}" class="shortcuts__group-title">{{ group.title }}</h3>
+      <dl class="shortcuts__list">
+        {% for row in group.rows %}
+        <div class="shortcuts__row"><dt>{% for k in row.keys %}<kbd>{{ k }}</kbd>{% endfor %}</dt><dd>{{ row.text }}</dd></div>
+        {% endfor %}
+      </dl>
+    </section>
+    {% endfor %}
+    <p class="shortcuts__note">On Windows and Linux, use Ctrl in place of ⌘.</p>
+  </div>
+</dialog>
