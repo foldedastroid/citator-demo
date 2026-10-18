@@ -341,13 +341,11 @@
     </header>
     <h3 id="occ-pop-title" class="occ-pop__title" x-text="occNavName"></h3>
     <div class="occ-pop__scrub">
-      <span class="occ-pop__scrub-label">Mention</span>
-      <span class="occ-step" role="group" aria-label="Mentions of this case in the opinion" x-show="occNavMany">
-        <button type="button" class="occ-step__btn" x-on:click="occPrev" aria-label="Previous mention">‹</button>
-        <span class="occ-step__pos" x-text="occMentionPos" aria-live="polite"></span>
-        <button type="button" class="occ-step__btn" x-on:click="occNext" aria-label="Next mention">›</button>
+      <span class="occ-pop__scrub-label" x-text="occNavCount" aria-live="polite"></span>
+      <span class="occ-step" role="group" aria-label="Occurrences of this case in the opinion" x-show="occNavMany">
+        <button type="button" class="occ-step__btn" x-on:click="occPrev" aria-label="Previous occurrence">‹<span x-show="occPinned">Previous</span></button>
+        <button type="button" class="occ-step__btn" x-on:click="occNext" aria-label="Next occurrence"><span x-show="occPinned">Next</span>›</button>
       </span>
-      <span class="occ-step__pos" x-show="occNavOne">Only mention</span>
     </div>
     <div class="occ-pop__treatment" x-show="occNavHasAnalysis">
       <div class="occ-pop__pills" x-ref="occPills"></div>
@@ -361,9 +359,10 @@
     <p class="occ-pop__text" x-show="occNavHasAnalysis" x-text="occNavRationale"></p>
     <blockquote class="occ-pop__quote" x-show="occNavHasQuote" x-text="occNavQuote"></blockquote>
     <p class="occ-pop__text" x-show="occNavOnlyCited">This opinion only cites the case; it applies no treatment to it and recognizes none.</p>
+    <p class="occ-pop__text" x-show="occNavUnknown">Treatment analysis is not available for this citation in this preview.</p>
     <footer class="occ-pop__foot">
-      <button type="button" class="occ-pop__action" x-show="occNavHasAnalysis" x-on:click="occToRow">
-        Full analysis {{ icon("arrow-right", "w-[13px] h-[13px]") }}
+      <button type="button" class="occ-pop__action" x-show="occNavHasRow" x-on:click="occToRow">
+        Read the complete citator analysis {{ icon("arrow-right", "w-[13px] h-[13px]") }}
       </button>
       <a class="occ-pop__action" x-show="occNavHasUrl" x-bind:href="occNavUrl" href="/">
         Open case {{ icon("external", "w-[13px] h-[13px]") }}

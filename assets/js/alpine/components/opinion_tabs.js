@@ -37,7 +37,8 @@ document.addEventListener('alpine:init', () => {
 
     pageRoot: null,
 
-    occNav: { open: false, n: 0, name: '', url: '', index: 0, total: 0, ...EMPTY_ROW },
+    occPinned: false,
+    occNav: { key: '', open: false, n: 0, name: '', url: '', index: 0, total: 0, ...EMPTY_ROW },
 
     occPos: { left: 0, top: 0, width: OCC_WIDTH, below: false, originX: 0 },
     occFrame: 0,
@@ -109,6 +110,7 @@ document.addEventListener('alpine:init', () => {
     showTab(id) {
       if (!VALID_TABS.includes(id) || id === this.activeTab) return;
       if (id !== 'opinion' && this.findOpen) this.setFind(false, false);
+      if (id !== 'opinion' && this.occNav.open) this.occClose();
       const panel = document.getElementById(`panel-${this.activeTab}`);
       const y = window.scrollY;
       const limit = panel ? Math.max(0, panel.parentElement.getBoundingClientRect().top + y - stickyBottom() - 16) : y;
@@ -221,12 +223,11 @@ document.addEventListener('alpine:init', () => {
 
 
     onCitationClick(event) {
-      const link = event.target.closest('a.cited-case-wrap');
-      if (!link) return;
-      const href = link.getAttribute('href') || '';
-      if (!href.startsWith('#authority-')) return;
+      const link = this.occLinkFor(event);
+      if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
-      this.occOpen(link);
+      this.occOpen(link, true);
+      if (event.detail === 0) this.$nextTick(() => this.$refs.occCard.querySelector('button').focus({ preventScroll: true }));
     },
 
     get occNavOpen() {
@@ -234,9 +235,10 @@ document.addEventListener('alpine:init', () => {
     },
 
     get occNavClass() {
-      return this.occNav.open ? 'is-open' : '';
+      return this.occNav.open ? (this.occPinned ? 'is-open is-pinned' : 'is-open') : '';
     },
     get occNavStyle() {
+      if (this.occPinned) return {};
       return {
         left: `${this.occPos.left}px`,
         top: `${this.occPos.top}px`,
@@ -258,8 +260,8 @@ document.addEventListener('alpine:init', () => {
     },
     get occNavCount() {
       if (!this.occNav.total) return '';
-      if (this.occNav.total === 1) return 'Only mention';
-      return `Mention ${this.occNav.index + 1} of ${this.occNav.total}`;
+      if (this.occNav.total === 1) return 'Only occurrence';
+      return `Occurrence ${this.occNav.index + 1} of ${this.occNav.total}`;
     },
 
     get occNavMany() {
@@ -441,7 +443,13 @@ document.addEventListener('alpine:init', () => {
       return this.backToTopVisible ? 0 : -1;
     },
     get occNavOnlyCited() {
-      return this.occNav.open && !this.occNav.hasAnalysis;
+      return this.occNav.open && this.occNav.n > 0 && !this.occNav.hasAnalysis;
+    },
+    get occNavUnknown() {
+      return this.occNav.open && this.occNav.n === 0;
+    },
+    get occNavHasRow() {
+      return this.occNav.n > 0;
     },
 
 
@@ -498,28 +506,41 @@ document.addEventListener('alpine:init', () => {
       this.occItemStep(-1);
     },
 
-    occMentions(n) {
-      return Array.from(this.pageRoot.querySelectorAll(`.opinion-body a.cited-case-wrap[data-group="${n}"]`));
+    occMentions(n, key = this.occNav.key) {
+      if (n) return Array.from(this.pageRoot.querySelectorAll(`.opinion-body a.cited-case-wrap[data-group="${n}"]`));
+      return Array.from(this.pageRoot.querySelectorAll('.opinion-body .cited-case-wrap a.cited-case[href]'))
+        .filter(link => `url:${link.getAttribute('href')}` === key);
     },
 
-    occOpen(link) {
+    occOpen(link, pinned = false) {
+      if (this.occPinned && !pinned) return;
       this.occHold();
-      const n = parseInt(link.dataset.group, 10);
-      const mentions = this.occMentions(n);
+      const n = parseInt(link.dataset.group, 10) || 0;
+      const key = n ? `group:${n}` : `url:${link.getAttribute('href')}`;
+      const mentions = this.occMentions(n, key);
       if (!mentions.length) return;
       const index = Math.max(0, mentions.indexOf(link));
-      if (this.occNav.open && this.occNav.n === n && this.occNav.index === index) return;
+      this.occPinned = pinned;
+      if (this.occNav.open && this.occNav.key === key && this.occNav.index === index) {
+        if (pinned) this.$nextTick(() => this.occShow());
+        return;
+      }
+      if (!n) {
+        this.$refs.occPills.replaceChildren();
+        this.$refs.occPillsPlain.replaceChildren();
+        occItems = [];
+      }
       this.occNav = {
+        key,
         open: true,
         n,
-        name: link.dataset.name || '',
-        url: link.dataset.url || '',
+        name: link.dataset.name || link.getAttribute('title') || link.textContent.trim(),
+        url: link.dataset.url || (n ? '' : link.getAttribute('href')),
         index,
         total: mentions.length,
-        ...this.occRowLead(n),
+        ...(n ? this.occRowLead(n) : EMPTY_ROW),
       };
-
-      this.$nextTick(() => this.occLocate());
+      this.$nextTick(() => pinned ? this.occShow() : this.occLocate());
     },
 
     occShow() {
@@ -531,7 +552,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     occLocate() {
-      if (!this.occNav.open) return;
+      if (!this.occNav.open || this.occPinned) return;
       const mention = this.occCurrent();
       const card = this.$refs.occCard;
       if (!mention || !card) return;
@@ -574,12 +595,20 @@ document.addEventListener('alpine:init', () => {
     },
     occToRow() {
       const hash = `authority-${this.occNav.n}`;
+      this.occClose();
       this.enterTab('authorities', hash);
       this.handleHash(hash);
+      this.$nextTick(() => {
+        const row = document.getElementById(hash);
+        if (!row) return;
+        row.tabIndex = -1;
+        row.focus({ preventScroll: true });
+      });
     },
     occClose() {
       this.occClearTimers();
-      this.occNav = { open: false, n: 0, name: '', url: '', index: 0, total: 0, ...EMPTY_ROW };
+      this.occPinned = false;
+      this.occNav = { key: '', open: false, n: 0, name: '', url: '', index: 0, total: 0, ...EMPTY_ROW };
       this.$refs.occPills.replaceChildren();
       this.$refs.occPillsPlain.replaceChildren();
       occItems = [];
@@ -835,9 +864,10 @@ document.addEventListener('alpine:init', () => {
     },
 
     occLinkFor(event) {
-      const link = event.target.closest && event.target.closest('.opinion-body a.cited-case-wrap');
-      if (!link || !(link.getAttribute('href') || '').startsWith('#authority-')) return null;
-      return link;
+      const link = event.target.closest?.('.opinion-body a.cited-case-wrap, .opinion-body .cited-case-wrap a.cited-case[href]');
+      if (!link) return null;
+      const href = link.getAttribute('href') || '';
+      return href.startsWith('#authority-') || /^\/opinion\/\d+\/$/.test(href) ? link : null;
     },
     occClearTimers() {
       clearTimeout(this.occOpenTimer);
@@ -852,7 +882,7 @@ document.addEventListener('alpine:init', () => {
 
     occRelease() {
       this.occClearTimers();
-      if (!this.occNav.open) return;
+      if (!this.occNav.open || this.occPinned) return;
       this.occCloseTimer = setTimeout(() => {
         const card = this.$refs.occCard;
         const active = document.activeElement;
@@ -884,7 +914,7 @@ document.addEventListener('alpine:init', () => {
       const link = this.occLinkFor(event);
       if (!link) return;
       event.preventDefault();
-      this.occOpen(link);
+      this.occOpen(link, true);
       this.$nextTick(() => {
         const controls = this.$refs.occCard.querySelectorAll('a[href], button');
         const first = Array.from(controls).find((el) => el.offsetParent !== null);
@@ -894,7 +924,7 @@ document.addEventListener('alpine:init', () => {
 
 
     occClickOutside(event) {
-      if (event.target.closest('a.cited-case-wrap')) return;
+      if (this.occLinkFor(event)) return;
       this.occClose();
     },
 

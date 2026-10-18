@@ -1061,6 +1061,25 @@
     @apply fixed z-popover overflow-auto rounded-popover border border-line-pop bg-white p-3 text-[11px] leading-[1.55] text-greyscale-900 shadow-hover;
     max-height: min(300px, calc(100dvh - 16px));
   }
+  .occ-pop.is-pinned {
+    @apply bottom-4 left-1/2 w-[calc(100%-2rem)] max-w-reading -translate-x-1/2 p-4;
+    top: auto;
+    max-height: min(40dvh, calc(100dvh - var(--topbar-h) - 2rem));
+    bottom: max(theme('spacing.4'), env(safe-area-inset-bottom));
+  }
+  .occ-pop.is-pinned .occ-pop__scrub {
+    @apply justify-between;
+  }
+  .occ-pop.is-pinned .occ-step__btn {
+    @apply w-auto gap-1 px-2;
+  }
+  .occ-pop.is-pinned .occ-pop__title {
+    @apply text-sm;
+  }
+  .occ-pop.is-pinned .occ-pop__text,
+  .occ-pop.is-pinned .occ-pop__action {
+    @apply text-xs;
+  }
   .occ-pop:not(.is-open) {
     display: none;
   }
