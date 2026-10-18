@@ -79,21 +79,34 @@
     will-change: transform;
   }
   .doc-rail__thumb {
-    @apply absolute left-[2.5px] top-0 z-[3] block h-3 w-0.5 cursor-grab bg-primary-700;
+    @apply absolute -left-[2.5px] top-0 z-[3] block h-7 w-3 cursor-grab bg-transparent;
     touch-action: none;
-    transition: opacity 120ms ease;
-    will-change: transform, height;
+    will-change: transform;
   }
   .doc-rail__thumb::before {
-    @apply absolute -inset-x-3 -inset-y-2;
+    @apply absolute -inset-x-2 -inset-y-2;
     content: '';
   }
-  .doc-rail__thumb:hover {
-    @apply bg-primary-800;
+  .doc-rail__thumb::after {
+    @apply pointer-events-none absolute inset-y-0 left-0.5 right-0.5 rounded-full bg-primary-600 opacity-0;
+    content: '';
+    box-shadow: 0 0 0 2px theme('colors.white');
+    transform: scale(0.125, 0.45);
+    transition: transform theme('transitionDuration.expansion') theme('transitionTimingFunction.standard'), opacity theme('transitionDuration.popover') ease;
+  }
+  .doc-rail.is-near-thumb .doc-rail__thumb::after {
+    opacity: 1;
+    transform: scale(1);
   }
   .doc-rail.is-scrubbing .doc-rail__thumb {
-    @apply cursor-grabbing bg-primary-800;
-    box-shadow: 0 0 0 1px theme('colors.white');
+    @apply cursor-grabbing;
+  }
+  .doc-rail.is-scrubbing .doc-rail__thumb::after {
+    opacity: 1;
+    transform: scale(1.25, 0.92);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .doc-rail__thumb::after { transition: none; }
   }
   .doc-rail.is-scrubbing,
   .doc-rail.is-scrubbing .doc-rail__field,

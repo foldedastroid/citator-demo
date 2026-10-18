@@ -1,7 +1,7 @@
 (function () {
   const ROW = 24;
 
-  const MARKER_SIZE = 12;
+  const MARKER_SIZE = 28;
   const FADE = 0.2;
   const MIN_OPACITY = 0.45;
   const LABEL_TAU = 200;
@@ -76,6 +76,7 @@
     let last = 0;
     let layoutFrame = 0;
     let scrubbing = null;
+    let pointer = null;
     let needsMeasure = false;
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -314,12 +315,19 @@
       });
     }
 
+    function updateThumbProximity() {
+      const rect = field.getBoundingClientRect();
+      const near = pointer && Math.abs(pointer.x - rect.left - 3.5) <= 24 &&
+        Math.abs(pointer.y - rect.top - markerNow) <= 36;
+      rail.classList.toggle('is-near-thumb', Boolean(near));
+    }
+
     function paint() {
 
       const from = Math.max(0, Math.min(height - MARKER_SIZE, markerNow - MARKER_SIZE / 2));
       thumb.style.transform = `translate3d(0, ${from.toFixed(1)}px, 0)`;
       thumb.style.height = `${MARKER_SIZE}px`;
-      thumb.style.opacity = '1';
+      updateThumbProximity();
       const progress = window.scrollY >= maxScroll - 1 ? height : markerNow;
       segments.forEach((seg) => {
         const f = Math.min(1, Math.max(0, (progress - seg.top) / Math.max(1, seg.h)));
@@ -448,6 +456,8 @@
       scrubTo(event.clientY);
     });
     field.addEventListener('pointermove', (event) => {
+      pointer = event.pointerType === 'touch' ? null : { x: event.clientX, y: event.clientY };
+      updateThumbProximity();
       if (pending && pending.id === event.pointerId && Math.abs(event.clientY - pending.y) > 4) {
         const rect = field.getBoundingClientRect();
         startScrub(event, pending.y - rect.top - markerNow);
@@ -455,6 +465,10 @@
         swallowClick = true;
       }
       if (scrubbing === event.pointerId) scrubTo(event.clientY);
+    });
+    field.addEventListener('pointerleave', () => {
+      pointer = null;
+      updateThumbProximity();
     });
     const endScrub = (event) => {
       pending = null;

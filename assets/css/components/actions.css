@@ -6,10 +6,21 @@
     @apply bg-greyscale-100 text-greyscale-900;
   }
   .split {
-    @apply relative inline-flex;
+    @apply relative inline-flex h-8 items-stretch rounded-control border border-greyscale-200 bg-white;
   }
-  .doc-action--main {
+  .split > .doc-action {
+    @apply h-full border-0 bg-transparent;
+  }
+  .split > .doc-action--main {
     @apply rounded-r-none;
+  }
+  .split > .doc-action--caret {
+    @apply m-0 w-7 rounded-l-none border-l border-greyscale-200 px-0;
+  }
+  .split > .doc-action:active { transform: none; }
+  .split > .doc-action:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px theme('colors.greyscale.500');
   }
   .doc-action__arrow-well {
     @apply relative inline-block h-3.5 w-3.5 shrink-0 overflow-hidden;
