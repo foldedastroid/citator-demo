@@ -193,10 +193,10 @@ scripts:
                  x-bind:value="pickerQuery" x-on:input="setPickerQuery">
         </label>
         <div class="court-modal__btns">
-          <button type="button" class="court-btn" x-on:click="checkAllCourts">Check all</button>
-          <button type="button" class="court-btn" x-on:click="clearAllCourts">Clear all</button>
-          <button type="button" class="court-btn" x-on:click="checkTabCourts">Check tab</button>
-          <button type="button" class="court-btn" x-on:click="clearTabCourts">Clear tab</button>
+          <button type="button" class="court-btn" x-on:click="checkAllCourts">Select all courts</button>
+          <button type="button" class="court-btn" x-on:click="clearAllCourts">Clear all courts</button>
+          <button type="button" class="court-btn" x-on:click="checkTabCourts" title="Select every court in the active tab, including courts hidden by the name filter">Select all in tab</button>
+          <button type="button" class="court-btn" x-on:click="clearTabCourts" title="Clear every court in the active tab, including courts hidden by the name filter">Clear tab courts</button>
         </div>
       </div>
 
@@ -242,7 +242,7 @@ scripts:
       </div>
 
       <div class="court-modal__foot">
-        <span class="text-sm text-greyscale-500"><span x-text="courtSummary">All courts</span> <span class="cite-list__dot" aria-hidden="true">·</span> <span x-text="visibleCount"></span> opinions</span>
+        <span class="text-sm text-greyscale-500" role="status" aria-live="polite"><span x-text="courtSummary">All courts</span> <span class="cite-list__dot" aria-hidden="true">·</span> <span x-text="visibleCount"></span> opinions</span>
         <button type="button" class="court-done" x-on:click="closePicker">Done</button>
       </div>
     </div>

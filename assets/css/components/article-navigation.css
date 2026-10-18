@@ -20,12 +20,20 @@
     @apply relative flex h-12 items-center overflow-hidden rounded-full border border-greyscale-200 bg-white text-greyscale-700 shadow-overlay;
   }
   .article-navigation__progress {
-    @apply pointer-events-none absolute inset-x-6 bottom-0 h-0.5 bg-greyscale-100;
+    @apply pointer-events-none absolute inset-0 overflow-hidden rounded-full;
+  }
+  .article-navigation__progress::before,
+  .article-navigation__progress-fill {
+    @apply absolute inset-0 rounded-full border-2 border-greyscale-100;
+    clip-path: inset(50% 0 0);
+  }
+  .article-navigation__progress::before {
+    content: '';
   }
   .article-navigation__progress-fill {
-    @apply block h-full origin-left bg-primary-600;
-    transform: scaleX(var(--article-progress, 0));
-    transition: transform 100ms linear;
+    @apply block border-primary-600;
+    clip-path: inset(50% calc((1 - var(--article-progress, 0)) * 100%) 0 0);
+    transition: clip-path theme('transitionDuration.feedback') linear;
   }
   .article-navigation__step {
     @apply flex h-11 w-11 flex-none items-center justify-center rounded-full text-greyscale-500 transition-colors hover:bg-greyscale-50 hover:text-greyscale-900 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent;

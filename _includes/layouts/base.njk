@@ -205,7 +205,7 @@
           {{ content | safe }}
         </main>
 
-        <footer id="footer" class="app-footer">
+        <footer id="footer" class="app-footer{% if panel and panel != "Filters" and panelSide != "left" %} app-footer--panel{% endif %}">
           <span>Generated {{ build.date | usdate }}</span>
           <span aria-hidden="true">·</span>
           <span>Open-source citator preview</span>

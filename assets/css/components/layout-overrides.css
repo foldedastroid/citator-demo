@@ -134,6 +134,14 @@
 
 @layer components {
   @media (min-width: 1024px) {
+    /* The fixed panel reserves the same width at the footer as in the reader grid. */
+    .app-footer--panel {
+      margin-right: var(--panel-w);
+      transition: margin-right theme('transitionDuration.expansion') theme('transitionTimingFunction.standard');
+    }
+    .panel-closed .app-footer--panel {
+      margin-right: 0;
+    }
     .citator-panel {
       @apply fixed right-0 z-rail m-0 border-y-0 px-4 py-6;
       top: var(--topbar-h);
@@ -154,12 +162,14 @@
   }
   .is-resizing .app-shell,
   .is-resizing .app-main,
+  .is-resizing .app-footer--panel,
   .is-resizing .page-with-panel,
   .is-resizing .app-sidebar,
   .is-resizing .app-panel {
     transition: none !important;
   }
   @media (prefers-reduced-motion: reduce) {
+    .app-footer--panel,
     .app-wordmark__name {
       transition: none;
     }

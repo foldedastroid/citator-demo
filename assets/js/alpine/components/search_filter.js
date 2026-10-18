@@ -169,7 +169,7 @@ document.addEventListener('alpine:init', () => {
       this.setCourts([]);
     },
     currentPanel() {
-      return this.$root.querySelector(`[data-tab-key="${this.pickerTab}"]`);
+      return this.$root.querySelector(`[role="tabpanel"][data-tab-key="${this.pickerTab}"]`);
     },
     checkTabCourts() {
       const panel = this.currentPanel();

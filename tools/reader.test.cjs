@@ -186,3 +186,22 @@ test('destroy prevents queued frames and next ticks from touching a detached rea
   assert.deepEqual(cancelled, [frame]);
   assert.equal(effects, 0);
 });
+
+test('back to top survives a pause and small scroll reversal, then hides on deliberate downward scrolling', () => {
+  const f = fixture();
+  const state = f.create();
+  const scroll = y => { f.window.scrollY = y; state.onPageScroll(); };
+  scroll(900);
+  assert.equal(state.backToTopVisible, false);
+  scroll(897);
+  assert.equal(state.backToTopVisible, true);
+  scroll(897);
+  scroll(900);
+  assert.equal(state.backToTopVisible, true);
+  scroll(940);
+  assert.equal(state.backToTopVisible, false);
+  scroll(930);
+  assert.equal(state.backToTopVisible, true);
+  scroll(480);
+  assert.equal(state.backToTopVisible, false);
+});

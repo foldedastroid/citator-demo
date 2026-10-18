@@ -93,8 +93,24 @@
     @apply m-0 border-y border-greyscale-200 py-4 text-sm text-greyscale-600;
   }
   .back-to-top-dock {
-    @apply pointer-events-none sticky z-sticky flex h-0 justify-center;
-    bottom: 1.25rem;
+    @apply pointer-events-none fixed z-sticky flex h-0 justify-end;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: calc(max(1rem, env(safe-area-inset-bottom)) + var(--footer-overlap, 0px));
+    transition: right theme('transitionDuration.expansion') theme('transitionTimingFunction.standard');
+  }
+  @media (min-width: 1024px) {
+    .back-to-top-dock {
+      right: calc(var(--panel-w) + 1.25rem);
+    }
+    .panel-closed .back-to-top-dock {
+      right: 1.25rem;
+    }
+  }
+  .is-resizing .back-to-top-dock {
+    transition: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .back-to-top-dock { transition: none; }
   }
   .back-to-top {
     @apply pointer-events-none grid h-[38px] w-[38px] place-items-center rounded-full border text-greyscale-600 no-underline opacity-0 hover:text-greyscale-900;

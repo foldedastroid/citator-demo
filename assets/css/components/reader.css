@@ -122,6 +122,17 @@
   .doc-rail__link:focus-visible {
     @apply text-greyscale-900;
   }
+  .doc-rail__link:focus {
+    outline: none;
+  }
+  .doc-rail__link:focus-visible .doc-rail__label {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  .doc-rail__item.is-reached .doc-rail__tick {
+    @apply bg-primary-600;
+  }
   .doc-rail__tick {
     @apply h-px w-2 flex-shrink-0 bg-current;
   }
@@ -261,8 +272,7 @@
     box-shadow: inset 0 0 0 1px theme('colors.greyscale.200');
   }
   .find__row:has(.find__input:focus-visible) {
-    outline: 2px solid theme('colors.primary.600');
-    outline-offset: 2px;
+    box-shadow: inset 0 0 0 2px theme('colors.greyscale.500');
   }
   .find__input {
     @apply h-8 min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] text-greyscale-900 placeholder:text-greyscale-400;

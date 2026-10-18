@@ -17,6 +17,7 @@ document.addEventListener('alpine:init', () => {
       pageRoot: null,
       backToTopVisible: false,
       lastScrollY: 0,
+      downwardScroll: 0,
       get tabSelected() {
         return this.$el.dataset.tab === this.activeTab ? 'true' : 'false';
       },
@@ -176,13 +177,28 @@ document.addEventListener('alpine:init', () => {
           this.selLocate();
         });
       },
+      positionBackToTop() {
+        const dock = this.pageRoot?.querySelector('.back-to-top-dock');
+        const footer = document.getElementById('footer');
+        if (!dock?.style || !footer) return;
+        const overlap = Math.max(0, window.innerHeight - footer.getBoundingClientRect().top);
+        dock.style.setProperty('--footer-overlap', `${overlap}px`);
+      },
       onPageScroll() {
-        const y = window.scrollY;
+        this.positionBackToTop();
+        const y = Math.max(0, window.scrollY);
         const delta = y - this.lastScrollY;
-        if (Math.abs(delta) < 4) return;
         this.lastScrollY = y;
-        const visible = y > TOP_SHOW_AFTER && delta < 0;
-        if (visible !== this.backToTopVisible) this.backToTopVisible = visible;
+        if (y <= TOP_SHOW_AFTER) {
+          this.backToTopVisible = false;
+          this.downwardScroll = 0;
+        } else if (delta < -1) {
+          this.backToTopVisible = true;
+          this.downwardScroll = 0;
+        } else if (delta > 0) {
+          this.downwardScroll += delta;
+          if (this.downwardScroll > 32) this.backToTopVisible = false;
+        }
       },
       init() {
         if (initialized || !lifecycle.active) return;
@@ -198,7 +214,11 @@ document.addEventListener('alpine:init', () => {
         this.initReaderSelection();
         lifecycle.listen(window, 'scroll', () => this.occFollow(), { passive: true, capture: true });
         lifecycle.listen(window, 'scroll', () => this.onPageScroll(), { passive: true });
-        lifecycle.listen(window, 'resize', () => this.occFollow());
+        lifecycle.listen(window, 'resize', () => {
+          this.occFollow();
+          this.positionBackToTop();
+        });
+        this.positionBackToTop();
         this.lastScrollY = window.scrollY;
         if ('ResizeObserver' in window) {
           const observer = new ResizeObserver(() => this.occFollow());

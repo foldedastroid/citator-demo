@@ -1,10 +1,6 @@
 (function () {
   const ROW = 24;
 
-  const GAP_MAIN = 22;
-  const GAP_MINOR = 5;
-  const GAP_TICKS = 7;
-
   const MARKER_SIZE = 12;
   const FADE = 0.2;
   const MIN_OPACITY = 0.45;
@@ -28,7 +24,6 @@
     const thumb = rail.querySelector('.doc-rail__thumb');
     const track = rail.querySelector('.doc-rail__track');
     let segments = [];
-    let gaps = [];
     const body = page.querySelector('.doc-layout__body');
     const layout = page.querySelector('.doc-layout');
     if (!field || !list || !thumb || !track || !layout) return;
@@ -201,18 +196,7 @@
     }
 
     function cut() {
-      const labelled = layout.dataset.rail === 'labels';
-      gaps = parts
-        .map((p) => ({ at: p.at, half: (p.level === 1 ? (labelled ? GAP_MAIN : GAP_TICKS) : GAP_MINOR) / 2 }))
-        .sort((a, b) => a.at - b.at);
-      const spans = [];
-      let from = 0;
-      gaps.forEach((g) => {
-        const to = g.at - g.half;
-        if (to - from > 2) spans.push([from, to]);
-        from = Math.max(from, g.at + g.half);
-      });
-      if (height - from > 2) spans.push([from, height]);
+      const spans = [[0, height]];
       track.replaceChildren();
       segments = spans.map(([top, bottom]) => {
         const seg = document.createElement('span');
@@ -279,6 +263,7 @@
       parts.forEach((p, i) => {
         const on = i === current;
         p.item.classList.toggle('is-active', on);
+        p.item.classList.toggle('is-reached', reached(p));
         if (on) p.link.setAttribute('aria-current', 'location');
         else p.link.removeAttribute('aria-current');
       });
@@ -290,8 +275,9 @@
       thumb.style.transform = `translate3d(0, ${from.toFixed(1)}px, 0)`;
       thumb.style.height = `${MARKER_SIZE}px`;
       thumb.style.opacity = '1';
+      const progress = window.scrollY >= maxScroll - 1 ? height : markerNow;
       segments.forEach((seg) => {
-        const f = Math.min(1, Math.max(0, (markerNow - seg.top) / Math.max(1, seg.h)));
+        const f = Math.min(1, Math.max(0, (progress - seg.top) / Math.max(1, seg.h)));
         seg.fill.style.transform = `scaleY(${f.toFixed(4)})`;
       });
       mains.forEach((p, i) => {
