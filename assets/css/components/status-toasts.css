@@ -1,0 +1,91 @@
+@layer components {
+  .doc-flag {
+    @apply mb-2 inline-flex max-w-full items-center gap-1.5 text-xs no-underline;
+  }
+  .doc-flag__mark {
+    @apply h-4 w-4;
+  }
+  .doc-flag__tier {
+    @apply font-semibold;
+  }
+  .doc-flag--stop .doc-flag__tier {
+    @apply text-signal-stop-ink;
+  }
+  .doc-flag--warning .doc-flag__tier {
+    @apply text-signal-warning-ink;
+  }
+  .doc-flag--caution .doc-flag__tier {
+    @apply text-signal-caution-ink;
+  }
+  .doc-flag--positive .doc-flag__tier {
+    @apply text-signal-positive-ink;
+  }
+  .doc-flag--neutral .doc-flag__tier {
+    @apply text-signal-neutral-ink;
+  }
+  .doc-flag__reason {
+    @apply truncate text-greyscale-600 before:mr-1.5 before:text-greyscale-300 before:content-['·'];
+  }
+  .doc-flag:hover .doc-flag__reason {
+    @apply text-greyscale-900 underline;
+  }
+  .doc-action {
+    @apply inline-flex h-8 items-center gap-2 rounded-control border border-greyscale-200 bg-white px-2.5 text-xs font-medium text-greyscale-700 no-underline transition-colors hover:border-greyscale-300 hover:bg-greyscale-50 hover:text-greyscale-900;
+  }
+  .toast-viewport {
+    @apply pointer-events-none fixed bottom-4 right-4 z-toast;
+    width: min(23.75rem, calc(100vw - 2rem));
+  }
+  .toast-stack {
+    @apply m-0 flex list-none flex-col gap-2 p-0;
+  }
+  .toast {
+    @apply pointer-events-auto flex items-start gap-2.5 rounded-popover bg-white py-3 pl-3.5 pr-2 font-sans text-[13px] leading-[1.385] text-greyscale-900;
+    box-shadow: theme('boxShadow.raised');
+    animation: toast-in 350ms cubic-bezier(0.25, 0.75, 0.6, 0.98);
+  }
+  .toast[data-leaving] {
+    @apply opacity-0;
+    transform: translateY(4px);
+    transition: opacity theme('transitionDuration.popover') ease, transform theme('transitionDuration.popover') ease;
+  }
+  .toast__icon {
+    @apply mt-px inline-flex h-4 w-4 flex-none text-signal-positive;
+  }
+  .toast[data-intent="neutral"] .toast__icon {
+    @apply text-greyscale-500;
+  }
+  .toast[data-intent="destructive"] .toast__icon {
+    @apply text-state-error;
+  }
+  .toast__copy {
+    @apply flex min-w-0 flex-1 flex-col;
+  }
+  .toast__title {
+    @apply font-normal;
+    overflow-wrap: anywhere;
+  }
+  .toast__message {
+    @apply m-0 text-xs text-greyscale-600;
+  }
+  .toast__action {
+    @apply -my-1 inline-flex h-6 flex-none items-center rounded-control px-2 text-xs font-medium text-primary-600 transition-[color,background-color,transform] duration-100 hover:bg-primary-50 hover:text-primary-700 active:translate-y-px;
+  }
+  .toast__dismiss {
+    @apply -my-1 inline-flex h-6 w-6 flex-none items-center justify-center rounded-control text-greyscale-500 transition-[color,background-color,transform] duration-100 hover:bg-greyscale-100 hover:text-greyscale-900 active:scale-[0.94];
+  }
+  .toast__dismiss svg {
+    @apply h-3.5 w-3.5;
+  }
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @media (max-width: 640px) {
+    .toast-viewport {
+      @apply right-1/2 translate-x-1/2;
+    }
+  }
+}

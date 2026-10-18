@@ -1,0 +1,75 @@
+@layer components {
+  .signal-mark {
+    @apply h-3.5 w-3.5 flex-shrink-0;
+  }
+  .signal-mark--stop {
+    @apply text-signal-stop;
+  }
+  .signal-mark--warning {
+    @apply text-signal-warning;
+  }
+  .signal-mark--caution {
+    @apply text-signal-caution;
+  }
+  .signal-mark--positive {
+    @apply text-signal-positive;
+  }
+  .signal-mark--neutral {
+    @apply text-signal-neutral;
+  }
+  .severity-badge--stop .severity-badge__icon {
+    @apply text-signal-stop;
+  }
+  .severity-badge--warning .severity-badge__icon {
+    @apply text-signal-warning;
+  }
+  .severity-badge--caution .severity-badge__icon {
+    @apply text-signal-caution;
+  }
+  .severity-badge--positive .severity-badge__icon {
+    @apply text-signal-positive;
+  }
+  .severity-badge--neutral .severity-badge__icon {
+    @apply text-signal-neutral;
+  }
+  .home-card__signal {
+    @apply mr-1.5 inline-flex align-[-2px];
+  }
+  .home-card__signal .signal-mark {
+    @apply h-4 w-4;
+  }
+
+  .opinion-body sup.fnref a::before {
+    content: "\2060[";
+  }
+  .opinion-body sup.fnref a::after {
+    content: "]";
+  }
+  .opinion-body .fn-label__link::before {
+    content: "^ ";
+    @apply font-semibold;
+  }
+  .fn-pop {
+    @apply fixed z-popover rounded-popover border border-line-pop bg-white p-3 text-xs leading-[1.6] text-greyscale-800 shadow-overlay;
+    max-height: min(320px, calc(100dvh - 16px));
+    overflow: auto;
+  }
+  .fn-pop:not(.is-open) {
+    display: none;
+  }
+  .fn-pop__close {
+    @apply absolute right-1.5 top-1.5;
+  }
+  .fn-pop__body {
+    @apply pr-5;
+  }
+  .fn-pop__body p {
+    @apply m-0;
+  }
+  .fn-pop__body p + p {
+    @apply mt-1.5;
+  }
+  .fn-pop__go {
+    @apply ml-auto mt-2 block w-fit text-xs font-medium text-primary-600 no-underline underline-offset-4 hover:text-primary-700 hover:underline;
+  }
+}

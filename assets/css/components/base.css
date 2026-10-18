@@ -1,0 +1,74 @@
+/* Component rules can refine these shared focus and motion defaults. */
+@layer base {
+  :root {
+    --content-max-width: 1200px;
+    --sidebar-w: 15.5rem;
+    --panel-w: 17rem;
+    --topbar-h: 3.5rem;
+    --topbar-px: 56;
+    --tabs-h: 2.75rem;
+    --case-head-h: 6.25rem;
+    --row-date: 6.5rem;
+    --row-cited: 5.5rem;
+    --row-chevron: 1rem;
+  }
+  html {
+    scroll-behavior: smooth;
+    overscroll-behavior: none;
+  }
+  body {
+    @apply bg-white font-sans text-sm text-greyscale-900 antialiased;
+    overscroll-behavior: none;
+  }
+  body.is-modal-open {
+    @apply overflow-hidden;
+  }
+  :focus-visible {
+    outline: 2px solid theme('colors.primary.600');
+    outline-offset: 2px;
+  }
+  input:focus-visible,
+  select:focus-visible {
+    outline-offset: 0;
+  }
+  ::selection {
+    @apply bg-primary-100;
+  }
+  h1 {
+    @apply font-cooper text-display-xs font-medium tracking-tight text-greyscale-900 md:text-display-sm;
+  }
+  h2 {
+    @apply text-role-section text-greyscale-900;
+  }
+  h3 {
+    @apply text-md font-medium text-greyscale-900;
+  }
+  h4 {
+    @apply text-sm font-medium text-greyscale-900;
+  }
+  ul {
+    @apply list-disc pl-6;
+  }
+  ol {
+    @apply list-decimal pl-6;
+  }
+  [x-cloak] {
+    display: none !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    .app-shell,
+    .app-sidebar,
+    .expand-chevron,
+    .citator-row__chevron {
+      transition: none;
+    }
+    .quote-flash,
+    .mention-flash .cited-case,
+    .row-flash {
+      animation: none;
+    }
+  }
+}

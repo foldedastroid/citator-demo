@@ -1,0 +1,156 @@
+@layer components {
+  .prose-about {
+    @apply max-w-3xl;
+  }
+  .about-lede {
+    @apply m-0 mt-3 text-md leading-relaxed text-greyscale-700;
+  }
+  .has-article {
+    @apply bg-greyscale-50;
+  }
+  .about-hero {
+    @apply border-b border-greyscale-200 pb-8 pt-2 sm:pb-10;
+  }
+  .about-eyebrow {
+    @apply m-0 mb-3 text-xs font-medium uppercase tracking-wide text-primary-700;
+  }
+  .about-section {
+    @apply m-0 border-b border-greyscale-200 py-8 sm:py-10;
+  }
+  .about-section--tinted {
+    @apply -mx-4 px-4 sm:-mx-6 sm:px-6;
+  }
+  .about-section h2 {
+    @apply m-0 text-role-section text-greyscale-900;
+  }
+  .about-section h3 {
+    @apply m-0 mt-8 text-sm font-semibold text-greyscale-900;
+  }
+  .about-section p {
+    @apply mt-3 text-[0.9375rem] leading-relaxed text-greyscale-700;
+  }
+  .about-section h3 + p,
+  .about-section h3 + div,
+  .about-section h3 + dl,
+  .about-section h3 + ul {
+    @apply mt-2;
+  }
+  .about-section strong {
+    @apply font-semibold text-greyscale-900;
+  }
+  .stat-grid {
+    @apply m-0 mt-6 grid gap-x-8 gap-y-5 border-y border-greyscale-200 py-5 sm:grid-cols-2;
+  }
+  .stat-card dt {
+    @apply text-xs text-greyscale-500;
+  }
+  .stat-card dd {
+    @apply m-0;
+  }
+  .stat-card__value {
+    @apply mt-1 font-cooper text-display-xs font-medium text-greyscale-900;
+  }
+  .stat-card__note {
+    @apply mt-1 text-sm leading-relaxed text-greyscale-600;
+  }
+  .about-cards {
+    @apply mt-3 grid gap-x-8 gap-y-4 sm:grid-cols-2;
+  }
+  .about-card {
+    @apply border-t border-greyscale-200 pt-3 text-sm text-greyscale-700;
+  }
+  .about-card > strong {
+    @apply block font-medium text-greyscale-900;
+  }
+  .about-card span {
+    @apply mt-1.5 block leading-relaxed text-greyscale-600;
+  }
+  .tier-list {
+    @apply mt-4 grid grid-cols-[max-content_1fr] items-center gap-x-4 gap-y-2.5 text-sm;
+  }
+  .tier-list dd {
+    @apply m-0 leading-relaxed text-greyscale-700;
+  }
+  .about-list {
+    @apply mt-3 list-disc space-y-2 pl-5 text-[0.9375rem] leading-relaxed text-greyscale-700;
+  }
+  .treatment-expand {
+    @apply mt-8;
+  }
+  .treatment-expand__summary {
+    @apply inline-flex cursor-pointer select-none items-center gap-1 rounded-control text-sm font-medium text-primary-600 hover:text-primary-700;
+  }
+  .table-wrap {
+    @apply mt-4 overflow-x-auto rounded-control border border-greyscale-300 bg-white;
+  }
+  .about-table {
+    @apply w-full table-fixed border-collapse text-sm;
+    min-width: theme('maxWidth.xl');
+  }
+  .about-table thead tr {
+    @apply bg-greyscale-100 text-left;
+  }
+  .about-table th {
+    @apply border-b border-greyscale-200 px-4 py-2 text-xs font-medium text-greyscale-500;
+  }
+  .about-table tbody {
+    @apply divide-y divide-greyscale-200;
+  }
+  .about-table td {
+    @apply px-4 py-3 align-top text-greyscale-700;
+  }
+  .about-table th + th,
+  .about-table td + td {
+    @apply border-l border-greyscale-200;
+  }
+  .about-table tbody tr:nth-child(even) {
+    @apply bg-greyscale-50;
+  }
+  .about-table td p {
+    @apply mt-0 text-sm;
+  }
+  .about-table__list {
+    @apply m-0 list-none space-y-0.5 pl-0;
+  }
+  .about-table__list--pills {
+    @apply space-y-1.5;
+  }
+  .about-table__list--icons li {
+    @apply flex items-start gap-2;
+  }
+  .about-table__list--icons svg {
+    @apply mt-0.5 flex-shrink-0;
+  }
+  .about-notice {
+    @apply mt-5 border-l-2 border-yellow-400 bg-yellow-50 px-4 py-3 text-sm leading-relaxed text-greyscale-700;
+  }
+  .start-panel {
+    @apply mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-greyscale-200 py-6;
+  }
+  .start-panel h2,
+  .feedback-panel h2 {
+    @apply m-0 text-role-section;
+  }
+  .start-panel__button {
+    @apply m-0 flex-shrink-0;
+  }
+  .start-panel .about-lede {
+    @apply mt-1 text-sm;
+  }
+  .feedback-panel {
+    @apply mt-6 scroll-mt-20 rounded-popover border border-primary-200 bg-primary-50 p-5 sm:p-8;
+  }
+  .feedback-card {
+    @apply inline-flex flex-col gap-1 rounded-control bg-primary-600 px-4 py-3 no-underline transition-colors hover:bg-primary-700;
+  }
+  .feedback-card__title {
+    @apply text-sm font-medium text-white;
+  }
+
+  .feedback-card__text {
+    @apply text-xs leading-relaxed text-primary-50;
+  }
+  .feedback-link {
+    @apply inline-flex h-8 flex-shrink-0 items-center gap-1.5 rounded-control border border-primary-200 bg-primary-50 px-2 text-xs font-medium text-primary-700 no-underline transition-colors hover:border-primary-300 hover:bg-primary-100;
+  }
+}

@@ -1,0 +1,167 @@
+/* Panel and pager geometry intentionally overrides the earlier layout rules. */
+@layer components {
+  .app-sidebar__header,
+  .app-panel__header {
+    @apply flex flex-shrink-0 items-center justify-between gap-2 border-b border-greyscale-200 px-3;
+    height: var(--topbar-h);
+  }
+  .app-sidebar__header {
+    @apply px-4;
+    width: var(--sidebar-w);
+  }
+  .app-sidebar__header .app-wordmark {
+    @apply m-0 min-w-0 gap-0.5 p-0;
+  }
+  .sidebar-reopen,
+  .filter-reopen {
+    display: none;
+  }
+  .sidebar-closed .sidebar-reopen {
+    display: inline-flex;
+  }
+  .filter-reopen {
+    @apply flex-shrink-0 items-center justify-center rounded-control border border-greyscale-300 bg-white px-3 py-1.5 text-sm font-medium text-greyscale-700 transition-colors hover:bg-greyscale-50;
+  }
+  .panel-closed .filter-reopen {
+    display: inline-flex;
+  }
+  .app-panel--filters {
+    @apply fixed right-0 z-drawer m-0 flex flex-col overflow-hidden border-0 border-l border-greyscale-200 bg-white p-0;
+    top: var(--topbar-h);
+    width: min(var(--panel-w), 88vw);
+    height: calc(100dvh - var(--topbar-h));
+    scrollbar-gutter: auto;
+  }
+  .app-panel--filters .app-panel__title {
+    @apply m-0 text-sm font-semibold;
+  }
+  .app-panel--filters .app-panel__inner {
+    @apply min-h-0 w-full flex-1 overflow-y-auto p-5;
+    overscroll-behavior: contain;
+  }
+  .panel-closed .app-panel--filters {
+    @apply invisible flex;
+    transform: translateX(100%);
+  }
+  .home-pager {
+    @apply mt-6 flex flex-col items-center gap-2;
+  }
+  .home-pager__controls {
+    @apply flex max-w-full items-center gap-1;
+  }
+  .home-pager__item {
+    @apply inline-flex flex-shrink-0;
+  }
+  .home-pager__btn {
+    @apply inline-flex h-8 min-w-8 flex-shrink-0 items-center justify-center gap-1 rounded-control border border-transparent bg-white px-2 text-sm font-medium text-greyscale-700 no-underline hover:border-greyscale-200 hover:bg-greyscale-50 disabled:cursor-default disabled:opacity-40 disabled:hover:border-transparent disabled:hover:bg-white;
+  }
+  .home-pager__number {
+    @apply w-8 px-0 tabular-nums;
+  }
+  .home-pager__btn[aria-current="page"] {
+    @apply border-primary-200 bg-primary-50 text-primary-700;
+  }
+  .home-pager__ellipsis {
+    @apply inline-flex h-8 w-8 items-center justify-center text-sm text-greyscale-500;
+  }
+  .home-pager__label {
+    @apply m-0 text-xs tabular-nums text-greyscale-500;
+  }
+  @media (min-width: 1024px) {
+    .has-filter-panel .app-main {
+      margin-right: var(--panel-w);
+      transition: margin-right theme('transitionDuration.expansion') theme('transitionTimingFunction.standard');
+    }
+    .panel-closed .has-filter-panel .app-main {
+      margin-right: 0;
+    }
+    .has-filter-panel .page-with-panel {
+      grid-template-columns: minmax(0, 1fr);
+      column-gap: 0;
+    }
+    .app-panel--filters {
+      @apply z-header shadow-none;
+      top: 0;
+      width: var(--panel-w);
+      height: 100dvh;
+      transition: transform theme('transitionDuration.expansion') theme('transitionTimingFunction.standard'), visibility theme('transitionDuration.expansion');
+    }
+  }
+  @media (max-width: 1023px) {
+    .app-sidebar__header {
+      width: 100%;
+    }
+  }
+  @media (max-width: 639px) {
+    .list-head__title {
+      @apply order-1 basis-1/2;
+    }
+    .list-head__count {
+      @apply order-2 ml-auto;
+    }
+    .list-head__sort {
+      @apply order-3 m-0;
+    }
+    .list-head__sort > span {
+      @apply sr-only;
+    }
+    .filter-reopen {
+      @apply order-4 ml-auto;
+    }
+    .home-pager__direction {
+      @apply sr-only;
+    }
+    .home-pager__btn {
+      @apply w-8 px-0;
+    }
+  }
+  @media (max-width: 374px) {
+    .home-pager__controls {
+      @apply gap-0.5;
+    }
+    .home-pager__btn,
+    .home-pager__ellipsis {
+      @apply w-7 min-w-7;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .has-filter-panel .app-main,
+    .app-panel--filters {
+      transition: none;
+    }
+  }
+}
+
+@layer components {
+  @media (min-width: 1024px) {
+    .citator-panel {
+      @apply fixed right-0 z-rail m-0 border-y-0 px-4 py-6;
+      top: var(--topbar-h);
+      width: var(--panel-w);
+      height: calc(100dvh - var(--topbar-h));
+      scrollbar-gutter: auto;
+      transition: transform theme('transitionDuration.expansion') theme('transitionTimingFunction.standard'), visibility 0s;
+    }
+    .panel-closed .citator-panel,
+    .panel-closed .app-panel--filters {
+      transform: translateX(100%);
+      transition: transform theme('transitionDuration.expansion') theme('transitionTimingFunction.standard'), visibility 0s linear theme('transitionDuration.expansion');
+    }
+    .citator-panel .app-panel__inner {
+      width: 100%;
+      max-width: none;
+    }
+  }
+  .is-resizing .app-shell,
+  .is-resizing .app-main,
+  .is-resizing .page-with-panel,
+  .is-resizing .app-sidebar,
+  .is-resizing .app-panel {
+    transition: none !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .app-wordmark__name {
+      transition: none;
+    }
+  }
+}

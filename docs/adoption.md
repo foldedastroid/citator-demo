@@ -1,14 +1,14 @@
 # Adopting this work upstream
 
-I would offer this fork as a few focused upstream changes rather than one large UI patch. It retains the Free Law Project history; the comparison starts at `f57aac28fcec0c0773452afe2f0f060a50fb219d`. The two existing fork commits bundle many features and comment-only changes, so individual features need a scoped patch rather than an isolated cherry-pick of those commits.
+I would offer this fork as a few focused upstream changes rather than one large UI patch. It retains the Free Law Project history; the comparison starts at `f57aac28fcec0c0773452afe2f0f060a50fb219d`. Earlier fork commits bundle many features and comment-only changes, so individual features need a scoped patch rather than an isolated cherry-pick of those commits.
 
 ## Suggested units
 
 | Unit | Files and dependencies to keep together |
 |---|---|
-| Search pagination | `_includes/macros/pagination.njk`, its `icons.njk` import, pagination state in `assets/js/alpine/components/search_filter.js`, the call and result attributes in `src/index.njk`, pagination rules in `assets/css/styles.css`, and `tools/pagination.test.cjs`. A whole-page copy also keeps its `search_suggest.js` and `expandable.js` scripts. |
+| Search pagination | `_includes/macros/pagination.njk`, its `icons.njk` import, pagination state in `assets/js/alpine/components/search_filter.js`, the call and result attributes in `src/index.njk`, pagination rules in `assets/css/components/layout-overrides.css`, and `tools/pagination.test.cjs`. A whole-page copy also keeps its `search_suggest.js` and `expandable.js` scripts. |
 | Citation matrix and history views | `tools/chart-data.cjs`, `tools/filters.cjs`, `_data/court_abbr.js`, their registration in `.eleventy.js`, `macros/citing_chart.njk` with its icon/treatment imports, `partials/cited-by-tab.njk`, `partials/history-tab.njk`, `partials/history-timeline.njk`, `opinion_views.js`, `treatment_list.js`, `components/opinion-views.css`, and the breakdown inputs in `partials/opinion-page.njk`. Keep range/count filtering and `tools/chart-data.test.cjs` with the chart. |
-| Reader, Find and citation popups | Start with `src/opinion.njk` and `partials/opinion-page.njk`, retaining that partial's imported macros and included tab partials. Keep its five page scripts: `opinion_tabs.js`, `treatment_list.js`, `opinion_views.js`, `doc_rail.js` and `case_actions.js`. Keep the matching reader/popup styles and the Find, occurrence and motion tests. |
+| Reader, Find and citation popups | Start with `src/opinion.njk` and `partials/opinion-page.njk`, retaining that partial's imported macros and included tab partials. Keep the ordered scripts from `src/opinion.njk`: the five `reader_*.js` composables, then `opinion_tabs.js`, `treatment_list.js`, `opinion_views.js`, `doc_rail.js` and `case_actions.js`. Keep `components/reader.css`, `components/opinion.css`, `components/markers-footnotes.css`, their ordered stylesheet imports, and the Find, occurrence, reader and motion tests. |
 | Sidebar and article navigation | The shell markup in `layouts/base.njk`, `macros/sidebar.njk`, `app_shell.js`, `shell_state.js` and `sidebar_tree.js` form the panel/sidebar contract. The About section control uses `article-navigation.js`, `components/article-navigation.css` and the article markup in `src/about.njk`. |
 
 Template paths above are under `_includes/` unless stated otherwise; component scripts are under `assets/js/alpine/components/`, other scripts under `assets/js/`, and component CSS under `assets/css/`.
@@ -18,10 +18,26 @@ Template paths above are under `_includes/` unless stated otherwise; component s
 I keep these dependencies explicit when moving a feature:
 
 - Eleventy 3, Nunjucks, Tailwind 3 and `@alpinejs/csp` 3.15.9 remain the runtime/build stack. Retain the deferred script order in `layouts/base.njk`: composables, controllers and page scripts register before Alpine starts. Bindings reference component members.
-- `tailwind.config.js` supplies the theme. `assets/css/styles.css` imports `fonts.css` and the opinion-view, citation-action and article-navigation component styles. Copying markup alone does not include these styles or the font files/notices.
+- `tailwind.config.js` supplies the theme. `assets/css/styles.css` is the ordered import entry point for fonts and feature styles under `components/`; its order preserves the existing cascade, including the late adaptive and layout overrides. Copying markup alone does not include these styles or the font files/notices.
 - `.eleventy.js` registers `tools/filters.cjs`, which imports both `tools/chart-data.cjs` and `_data/court_abbr.js`. The shared layout uses `listCounts`; templates also use `citeTail`, `worstSignal`, `usdate` and `chartBreakdown`.
 - `_data/site.js` supplies the app home and feedback URL. Opinion templates consume the generated `allOpinions`, opinion, court, treatment-definition and scope data; retain their current field names and the data contract in [data.md](data.md).
 - The [separate style guide](https://github.com/foldedastroid/citator-preview-style-guide) is a reference and live specimen site. It is not an app build dependency. Its sync script lists the shared files; its `/search/` home override belongs only to the guide.
+
+## Reader boundaries
+
+`opinion_tabs.js` registers `opinionTabs` and owns tab/hash navigation, back-to-top state and the shared overlay positioning frame. Its feature dependencies are explicit:
+
+| Composable under `assets/js/alpine/composables/` | Responsibility |
+|---|---|
+| `reader_support.js` | Descriptor-preserving composition, duplicate-member checks, lifecycle cleanup and header geometry. |
+| `reader_find.js` | Match marks, bounded excerpts, query revisions and the expanding Find control. |
+| `reader_citations.js` | Citation identity, occurrence navigation, treatment evidence and pinned/hover previews. |
+| `reader_popovers.js` | Why and footnote dialogs, placement and focus return. |
+| `reader_selection.js` | Selected passages, citation/passage copying and temporary quote highlights. |
+
+Each factory closes over its own mutable state. Features use the assembled component's public methods for actions such as selected-text Find; they do not share mutable module globals. Initialization registers listeners through one lifecycle, and Alpine's `destroy()` removes them, disconnects the observer, cancels animation frames/timers and prevents queued next ticks from acting on a detached reader. Composition copies property descriptors so Alpine getters stay live and duplicate public members fail immediately.
+
+Keep `reader_support.js` first, the four feature factories next and `opinion_tabs.js` after them, all before Alpine starts. The page frontmatter is the canonical order; `tools/reader-harness.cjs` loads those actual files for the Find, occurrence and reader tests. State-isolation tests do not imply a complete multiple-reader page contract: the document-level Find shortcut remains intended for one reader per page.
 
 ## Decisions to separate from the UI
 

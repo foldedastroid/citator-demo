@@ -1,0 +1,324 @@
+@layer components {
+  .doc-page {
+    --case-head-h: 0px;
+  }
+  .doc-layout {
+    @apply grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .doc-layout__body {
+    @apply min-w-0;
+  }
+  .doc-rail {
+    @apply h-0;
+  }
+  .doc-rail__field {
+    @apply hidden;
+  }
+  .doc-layout.is-reading .doc-layout__body {
+    @apply pt-10;
+    grid-row: 1;
+    grid-column: 1;
+  }
+  .doc-layout.is-reading .doc-rail {
+    @apply sticky z-rail self-start;
+    top: calc(var(--topbar-h) + var(--case-head-h) + 0.25rem);
+    grid-row: 1;
+    grid-column: 1;
+  }
+  .doc-rail__head {
+    @apply relative hidden h-8 flex-shrink-0 items-center;
+  }
+  .doc-layout.is-reading .doc-rail__head {
+    @apply flex;
+  }
+  .find-anchor {
+    @apply relative h-8 w-8;
+  }
+  .find {
+    @apply absolute left-0 top-0 z-popover w-8;
+    --find-duration: theme('transitionDuration.expansion');
+    --find-ease: theme('transitionTimingFunction.standard');
+  }
+  .find.is-open {
+    width: var(--find-width, 20rem);
+  }
+  .doc-layout[data-rail] {
+    @apply gap-x-6;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+  }
+  .doc-layout[data-rail] .doc-layout__body {
+    grid-column: 2;
+  }
+  .doc-layout[data-rail] .doc-rail {
+    @apply flex flex-col;
+    height: calc(100dvh - var(--topbar-h) - var(--case-head-h) - 6rem);
+  }
+  .doc-layout[data-rail] .find-anchor {
+    @apply -ml-[9px];
+  }
+  .doc-layout[data-rail] .doc-rail__field {
+    @apply block;
+  }
+  .doc-rail__find {
+    @apply inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-control text-greyscale-500 hover:bg-greyscale-100 hover:text-greyscale-900;
+  }
+  .doc-rail__field {
+    @apply relative mt-3 min-h-0 flex-1 cursor-pointer select-none;
+    touch-action: none;
+  }
+  .doc-rail__track {
+    @apply pointer-events-none absolute bottom-0 left-[3px] top-0 w-px bg-greyscale-200;
+  }
+  .doc-rail__seg {
+    @apply absolute inset-x-0 overflow-hidden bg-greyscale-200;
+  }
+  .doc-rail__fill {
+    @apply absolute inset-0 origin-top bg-primary-600;
+    transform: scaleY(0);
+    will-change: transform;
+  }
+  .doc-rail__thumb {
+    @apply absolute left-[2.5px] top-0 z-[3] block h-3 w-0.5 cursor-grab bg-primary-700;
+    touch-action: none;
+    transition: opacity 120ms ease;
+    will-change: transform, height;
+  }
+  .doc-rail__thumb::before {
+    @apply absolute -inset-x-3 -inset-y-2;
+    content: '';
+  }
+  .doc-rail__thumb:hover {
+    @apply bg-primary-800;
+  }
+  .doc-rail.is-scrubbing .doc-rail__thumb {
+    @apply cursor-grabbing bg-primary-800;
+    box-shadow: 0 0 0 1px theme('colors.white');
+  }
+  .doc-rail.is-scrubbing,
+  .doc-rail.is-scrubbing .doc-rail__field,
+  .doc-rail.is-scrubbing .doc-rail__link {
+    cursor: grabbing;
+    user-select: none;
+  }
+  .doc-rail__list {
+    @apply absolute inset-0 z-[2] m-0 list-none p-0;
+  }
+  .doc-rail__item {
+    @apply absolute left-0 top-0 h-0 w-full;
+  }
+  .doc-rail__link {
+    @apply absolute left-0 flex h-6 min-w-6 max-w-full -translate-y-1/2 items-center gap-2.5 text-[12.5px] leading-none no-underline;
+    color: color-mix(in srgb, theme('colors.greyscale.900') calc(var(--near, 0) * 100%), theme('colors.greyscale.500'));
+    opacity: var(--fade, 1);
+    transition: opacity theme('transitionDuration.popover') ease, color theme('transitionDuration.popover') ease;
+  }
+  .doc-rail:hover .doc-rail__link,
+  .doc-rail:focus-within .doc-rail__link,
+  .doc-rail.is-scrubbing .doc-rail__link {
+    opacity: 1;
+  }
+  .doc-rail__link:hover,
+  .doc-rail__link:focus-visible {
+    @apply text-greyscale-900;
+  }
+  .doc-rail__tick {
+    @apply h-px w-2 flex-shrink-0 bg-current;
+  }
+  .doc-rail__item.is-active .doc-rail__label {
+    @apply font-medium;
+  }
+  .doc-rail__label {
+    @apply pointer-events-none invisible absolute left-5 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-control border border-line-pop bg-white px-2 py-1 text-xs text-greyscale-900 opacity-0 shadow-overlay;
+    transition: opacity 120ms ease, visibility 0s linear 120ms;
+  }
+  .doc-rail__link:hover .doc-rail__label,
+  .doc-rail__link:focus-visible .doc-rail__label {
+    @apply visible opacity-100;
+    transition: opacity 120ms ease, visibility 0s;
+  }
+  .doc-layout[data-rail="labels"] {
+    @apply gap-x-6;
+    grid-template-columns: 7rem minmax(0, 1fr);
+  }
+  .doc-layout[data-rail="labels"] .doc-rail__item--l1 .doc-rail__label {
+    @apply pointer-events-auto visible static -ml-px min-w-0 translate-y-0 truncate rounded-none border-0 bg-white py-1 pl-px pr-1.5 text-inherit opacity-100 shadow-none;
+    font-size: inherit;
+    transition: none;
+  }
+  .doc-layout[data-rail="labels"] .doc-rail__item--l1 .doc-rail__link {
+    opacity: 1;
+  }
+  .doc-layout[data-rail="labels"] .doc-rail__item--l1 .doc-rail__label {
+    color: color-mix(in srgb, currentColor calc(var(--fade, 1) * 100%), white);
+    transition: color theme('transitionDuration.popover') ease;
+  }
+  .doc-rail:hover .doc-rail__item--l1 .doc-rail__label,
+  .doc-rail:focus-within .doc-rail__item--l1 .doc-rail__label,
+  .doc-rail.is-scrubbing .doc-rail__item--l1 .doc-rail__label {
+    color: inherit;
+  }
+  .switch-row {
+    @apply mt-4 border-t border-greyscale-200 pt-3;
+  }
+  .switch-row__control {
+    @apply -mx-1.5 flex w-[calc(100%+0.75rem)] items-center justify-between gap-3 rounded-control px-1.5 py-1 text-left text-xs font-medium text-greyscale-700 transition-colors hover:bg-greyscale-50 hover:text-greyscale-900;
+  }
+  .switch-row__control[aria-checked="true"] {
+    @apply text-greyscale-900;
+  }
+  .switch-row__help {
+    @apply m-0 mt-1 text-[11px] leading-snug text-greyscale-500;
+  }
+  .switch {
+    @apply relative h-3.5 w-6 flex-none rounded-full bg-greyscale-200;
+    box-shadow: inset 0 0 0 1px rgb(23 20 17 / 8%);
+    transition: background-color 150ms ease-out;
+  }
+  .switch::after {
+    @apply absolute left-0.5 top-0.5 h-2.5 w-2.5 rounded-full bg-white;
+    content: '';
+    box-shadow: 0 1px 2px rgb(16 24 40 / 20%);
+    transition: transform 150ms theme('transitionTimingFunction.standard');
+  }
+  [aria-checked="true"] > .switch {
+    @apply bg-primary-600;
+  }
+  [aria-checked="true"] > .switch::after {
+    transform: translateX(10px);
+  }
+  .switch-row__control:active .switch::after {
+    @apply w-3;
+  }
+  .switch-row__control:active[aria-checked="true"] .switch::after {
+    transform: translateX(8px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .switch,
+    .switch::after {
+      transition: none;
+    }
+  }
+  @media (forced-colors: active) {
+    .switch {
+      border: 1px solid CanvasText;
+    }
+    [aria-checked="true"] > .switch {
+      background: Highlight;
+    }
+  }
+  .trail__all {
+    @apply text-xs font-medium text-primary-600 no-underline hover:underline;
+  }
+  .trail__list {
+    @apply m-0 mt-2.5 list-none p-0;
+  }
+  .trail__step {
+    @apply relative pb-3 pl-4 last:pb-0;
+  }
+  .trail__step::before {
+    @apply absolute left-0 top-[5px] h-[7px] w-[7px] rounded-full border border-greyscale-300 bg-white;
+    content: '';
+  }
+  .trail__step::after {
+    @apply absolute bottom-0 left-[3px] top-[15px] w-px bg-greyscale-200;
+    content: '';
+  }
+  .trail__step:last-child::after {
+    display: none;
+  }
+  .trail__step.is-self::before {
+    @apply border-greyscale-900 bg-greyscale-900;
+  }
+  .trail__step.is-reported::before {
+    @apply border-dashed;
+  }
+  .trail__court {
+    @apply m-0 text-xs font-medium leading-snug text-greyscale-900;
+  }
+  .trail__meta {
+    @apply m-0 mt-0.5 flex min-w-0 items-baseline gap-1.5 text-[11px] text-greyscale-500;
+  }
+  .trail__here,
+  .trail__case {
+    @apply min-w-0 truncate before:mr-1.5 before:text-greyscale-300 before:content-['·'];
+  }
+  .trail__here {
+    @apply text-greyscale-700;
+  }
+  .trail__case {
+    @apply text-primary-600 no-underline hover:underline;
+  }
+  .trail__act {
+    @apply m-0 mt-1 flex items-center gap-1.5 text-[11px] text-greyscale-700;
+  }
+  .trail__mark {
+    @apply h-2.5 w-2.5 flex-shrink-0;
+  }
+
+  .find__row {
+    @apply flex h-8 w-full items-center overflow-hidden rounded-control bg-white;
+    box-shadow: inset 0 0 0 1px theme('colors.greyscale.200');
+  }
+  .find__row:has(.find__input:focus-visible) {
+    outline: 2px solid theme('colors.primary.600');
+    outline-offset: 2px;
+  }
+  .find__input {
+    @apply h-8 min-w-0 flex-1 border-0 bg-transparent p-0 text-[13px] text-greyscale-900 placeholder:text-greyscale-400;
+  }
+  .find__input:focus {
+    outline: none;
+    box-shadow: none;
+  }
+  .find__close {
+    @apply inline-flex h-8 w-8 flex-shrink-0 items-center justify-center text-greyscale-500 hover:bg-greyscale-100 hover:text-greyscale-900;
+  }
+  .find:not(.is-open) .find__input,
+  .find:not(.is-open) .find__close {
+    visibility: hidden;
+  }
+  .find__row :is(.doc-rail__find, .find__close):focus-visible {
+    outline-offset: -4px;
+  }
+  .find__input::-webkit-search-cancel-button {
+    appearance: none;
+  }
+  .find__results {
+    @apply absolute left-0 top-full w-full overflow-auto rounded-b-control border border-t-0 border-greyscale-200 bg-white shadow-overlay;
+    max-height: var(--find-results-height, 16rem);
+    transform-origin: top;
+    animation: find-results theme('transitionDuration.expansion') theme('transitionTimingFunction.standard');
+  }
+  .find__bar {
+    @apply flex min-h-8 items-center justify-between gap-2 border-b border-greyscale-100 px-3 py-1;
+  }
+  .find__pos {
+    @apply text-[11px] tabular-nums text-greyscale-500;
+  }
+  .find__match {
+    @apply block w-full border-b border-greyscale-100 px-3 py-2 text-left text-xs leading-relaxed text-greyscale-700 hover:bg-greyscale-50;
+  }
+  .find__match[aria-current="true"] {
+    @apply bg-primary-50;
+  }
+  .find__match mark {
+    @apply bg-mark text-inherit;
+  }
+  @keyframes find-results {
+    from { opacity: 0; transform: scaleY(0.9); }
+    to { opacity: 1; transform: scaleY(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .find__results { animation: none; }
+  }
+  .opinion-body mark.find-hit {
+    @apply rounded-mark text-inherit;
+    background: theme('colors.mark');
+    padding: 1px 0;
+  }
+  .opinion-body mark.find-hit--current {
+    @apply bg-yellow-400;
+    box-shadow: 0 0 0 2px theme('colors.yellow.400');
+  }
+}

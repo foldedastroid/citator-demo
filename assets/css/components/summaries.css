@@ -1,0 +1,139 @@
+@layer components {
+  .summary__title {
+    @apply m-0 mb-2.5 text-xs font-semibold tracking-normal text-greyscale-700;
+  }
+  .summary__status {
+    @apply flex items-center gap-2 rounded-control border border-greyscale-200 px-3 py-2.5;
+  }
+  .summary__mark {
+    @apply h-4 w-4;
+  }
+  .summary__tier {
+    @apply flex-1 text-[13px] font-semibold;
+  }
+  .summary__status--stop .summary__tier {
+    @apply text-signal-stop-ink;
+  }
+  .summary__status--warning .summary__tier {
+    @apply text-signal-warning-ink;
+  }
+  .summary__status--caution .summary__tier {
+    @apply text-signal-caution-ink;
+  }
+  .summary__status--positive .summary__tier {
+    @apply text-signal-positive-ink;
+  }
+  .summary__status--neutral .summary__tier {
+    @apply text-signal-neutral-ink;
+  }
+  .summary__why {
+    @apply rounded-control text-xs font-medium text-primary-600 no-underline hover:underline;
+  }
+  .summary__note {
+    @apply m-0 mt-2 text-[11px] leading-snug text-greyscale-500;
+  }
+  .meter {
+    @apply mt-4 border-t border-greyscale-200 pt-3;
+  }
+  .meter__head {
+    @apply flex items-baseline justify-between gap-2;
+  }
+  .meter__title {
+    @apply text-xs font-medium text-greyscale-700;
+  }
+  .meter__total {
+    @apply text-[11px] tabular-nums text-greyscale-500 no-underline hover:text-greyscale-900 hover:underline;
+  }
+  .meter__total b {
+    @apply text-[13px] font-semibold text-greyscale-900;
+  }
+  .meter__bar {
+    @apply mt-2 flex h-1.5 overflow-hidden rounded-full bg-greyscale-100;
+  }
+  .meter__segment {
+    @apply h-full min-w-[2px] flex-none;
+  }
+  .meter__segment + .meter__segment {
+    @apply border-l border-white;
+  }
+  .meter__segment--stop {
+    @apply bg-signal-stop;
+  }
+  .meter__segment--warning {
+    @apply bg-signal-warning;
+  }
+  .meter__segment--caution {
+    @apply bg-signal-caution;
+  }
+  .meter__segment--positive {
+    @apply bg-signal-positive;
+  }
+  .meter__segment--neutral {
+    @apply bg-signal-neutral;
+  }
+  .meter__rows {
+    @apply m-0 mt-2 grid list-none gap-0.5 p-0;
+  }
+  .meter__row {
+    @apply -mx-1.5 grid items-baseline gap-x-3 rounded-control px-1.5 py-0.5 text-xs tabular-nums text-greyscale-700 no-underline;
+    grid-template-columns: minmax(0, 1fr) auto 2.4rem;
+  }
+  a.meter__row {
+    @apply transition-colors hover:bg-greyscale-100 hover:text-greyscale-900;
+  }
+  a.meter__row:hover .meter__label {
+    @apply underline decoration-greyscale-300 underline-offset-2;
+  }
+  a.meter__segment {
+    @apply block transition-opacity hover:opacity-80;
+  }
+  .meter__row--empty {
+    @apply text-greyscale-500;
+  }
+  .meter__label {
+    @apply flex items-center gap-2;
+  }
+  .meter__dot {
+    @apply inline-block h-2 w-2 flex-shrink-0 rounded-full;
+  }
+  .meter__row--empty .meter__dot {
+    @apply opacity-40;
+  }
+  .meter__value {
+    @apply text-right;
+  }
+  .meter__share {
+    @apply text-right text-[11px] text-greyscale-500;
+  }
+  .meter__empty {
+    @apply m-0 mt-1.5 text-xs text-greyscale-500;
+  }
+  .discussion {
+    @apply inline-flex items-center gap-2;
+  }
+  .discussion__bars {
+    @apply inline-flex gap-0.5;
+  }
+  .discussion__bar {
+    @apply block h-1.5 w-2.5 rounded-mark bg-greyscale-200;
+  }
+  .discussion__bar.is-on {
+    @apply bg-greyscale-600;
+  }
+  .discussion__n {
+    @apply text-xs tabular-nums text-greyscale-500;
+  }
+  .citator-row__excerpt {
+    @apply m-0 mt-1.5 max-w-2xl border-l-2 border-greyscale-200 pl-2.5 text-xs leading-relaxed text-greyscale-600;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .citator-row__excerpt .evidence-card__case {
+    @apply font-semibold text-greyscale-800;
+  }
+  .authority-row[open] .citator-row__excerpt {
+    display: none;
+  }
+}

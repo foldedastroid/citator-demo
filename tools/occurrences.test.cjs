@@ -1,8 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
+const { loadReader } = require('./reader-harness.cjs');
 
 function link(href, name, group) {
   return {
@@ -14,18 +12,16 @@ function link(href, name, group) {
 }
 
 function fixture(plain = [], groups = []) {
-  let factory;
   const flashed = [];
   const destination = { focus() { this.focused = true; } };
   const context = {
     document: { addEventListener: (_, callback) => callback(), getElementById: () => destination },
-    Alpine: { data: (_, value) => { factory = value; } },
     highlightElement: value => flashed.push(value),
     clearTimeout() {},
     setTimeout() { throw new Error('Pinned navigation must not schedule dismissal'); },
   };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/alpine/components/opinion_tabs.js'), 'utf8'), context);
-  const state = factory();
+  const reader = loadReader(context);
+  const state = reader.create();
   state.$nextTick = callback => callback();
   state.pageRoot = { querySelectorAll: selector => selector.includes('[data-group=') ? groups : plain };
   state.$refs = { occPills: { replaceChildren() {} }, occPillsPlain: { replaceChildren() {} } };

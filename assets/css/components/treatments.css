@@ -1,0 +1,157 @@
+@layer components {
+  .citator-row {
+    @apply grid items-start gap-x-3 gap-y-1.5 px-4 py-3;
+    grid-template-columns:
+      minmax(0, 1fr) var(--row-date) var(--row-cited) var(--row-chevron);
+  }
+  .citator-row--head {
+    @apply items-center border-b border-greyscale-200 py-2 text-xs text-greyscale-500;
+  }
+  .citator-row__date,
+  .citator-row__cited,
+  .col-head--pad {
+    @apply pl-4;
+  }
+  .citator-row__date,
+  .citator-row__cited {
+    @apply pt-0.5 text-xs tabular-nums text-greyscale-600;
+  }
+  .citator-row__treatment {
+    @apply flex flex-wrap items-center gap-x-1.5 gap-y-1;
+    grid-column: 1 / -1;
+  }
+  .citator-row__treatment > span {
+    @apply inline-flex max-w-full items-center gap-x-1.5;
+  }
+  .citator-row__name {
+    @apply min-w-0 text-sm;
+  }
+  .citator-row__title {
+    @apply font-medium text-greyscale-900;
+  }
+  .citator-row__link {
+    @apply font-medium text-greyscale-900 no-underline hover:text-primary-700 hover:underline;
+  }
+  .citator-row__meta {
+    @apply m-0 mt-0.5 text-xs text-greyscale-500;
+  }
+  .citator-row__meta-item {
+    @apply inline-flex items-baseline gap-x-1;
+  }
+  .citator-row__chevron {
+    @apply mt-1 h-4 w-4 text-greyscale-400;
+  }
+  .citator-list {
+    @apply m-0 flex list-none flex-col pl-0;
+  }
+  .cited-authority {
+    @apply border-b border-b-greyscale-200;
+  }
+  .sev-rail {
+    border-left: 0;
+  }
+  .sev-rail--stop {
+    border-left: 0;
+  }
+  .sev-rail--warning {
+    border-left: 0;
+  }
+  .sev-rail--caution,
+  .sev-rail--positive {
+    border-left: 0;
+  }
+  .authority-row__summary {
+    @apply cursor-pointer;
+  }
+  .authority-row__summary:focus-visible {
+    outline-offset: -2px;
+  }
+  .authority-row[open] > .authority-row__summary {
+    @apply bg-transparent;
+  }
+  .cited-authority__body {
+    @apply min-w-0;
+  }
+  .row-hidden {
+    display: none !important;
+  }
+  .col-head {
+    @apply relative flex items-center gap-1;
+  }
+  .list-filter {
+    @apply relative flex-shrink-0 whitespace-nowrap text-xs;
+  }
+  .list-filter__summary {
+    @apply inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-control border border-greyscale-200 bg-white px-2.5 font-medium text-greyscale-700 transition-colors hover:border-greyscale-300 hover:bg-greyscale-50 hover:text-greyscale-900;
+  }
+  .list-filter[open] > .list-filter__summary,
+  .list-filter__on {
+    @apply border-greyscale-300 bg-greyscale-100 text-greyscale-900;
+  }
+  .list-filter__menu {
+    @apply absolute left-0 top-full z-menu mt-1.5 w-52 rounded-popover border border-line-pop bg-white p-2 shadow-overlay;
+  }
+  .list-filter__menu--wide {
+    @apply w-max;
+  }
+  .list-filter__columns {
+    @apply grid grid-cols-2 gap-x-4;
+  }
+  .list-filter__heading {
+    @apply m-0 px-1 pb-1 text-[0.6875rem] text-greyscale-500;
+  }
+  .list-filter__heading--next {
+    @apply mt-1.5 border-t border-greyscale-200 pt-1.5;
+  }
+  .list-filter__option {
+    @apply flex cursor-pointer items-center gap-2 rounded-control px-1 py-1 font-normal text-greyscale-700 hover:bg-greyscale-50;
+  }
+  .list-filter__clear {
+    @apply mt-1 w-full rounded-control px-1 py-1 text-left font-medium text-primary-600 hover:bg-greyscale-50;
+  }
+  .authority-detail {
+    @apply grid gap-0 px-4 pb-3 pl-8 text-sm;
+  }
+  .evidence-card {
+    @apply flex flex-col gap-2 border-t border-greyscale-200 py-3;
+  }
+  .evidence-card__head {
+    @apply flex flex-wrap items-center gap-2;
+  }
+  .evidence-card__other {
+    @apply text-xs text-greyscale-500;
+  }
+  .evidence-card__rationale {
+    @apply m-0 text-[0.8125rem] leading-relaxed text-greyscale-700;
+  }
+  .evidence-card__quote {
+    @apply m-0 border-l-2 border-greyscale-200 pl-3.5;
+  }
+  .evidence-card__quote-text {
+    @apply m-0 text-[0.8125rem] leading-relaxed text-greyscale-800;
+  }
+  .evidence-card__case {
+    @apply font-semibold text-greyscale-900;
+  }
+  .evidence-card__link {
+    @apply mt-2 inline-flex items-center gap-1 rounded-control text-xs font-medium text-primary-600 no-underline hover:text-primary-700 hover:underline;
+  }
+  .quote-status {
+    @apply m-0 mt-1.5 flex flex-wrap items-center gap-x-1.5 text-[0.6875rem] leading-snug;
+  }
+  .quote-status__ok {
+    @apply text-state-success;
+  }
+  .quote-status__warn {
+    @apply text-state-warning;
+  }
+  .quote-status__bad {
+    @apply text-state-error;
+  }
+  .quote-status__muted {
+    @apply text-greyscale-500;
+  }
+  .quote-status__sep {
+    @apply text-greyscale-300;
+  }
+}

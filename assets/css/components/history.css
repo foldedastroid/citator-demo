@@ -1,0 +1,152 @@
+@layer components {
+  .history-scroll {
+    @apply mt-5 overflow-x-auto border-y border-greyscale-200;
+  }
+  .history-chain {
+    @apply grid p-4 pb-2;
+    gap: 0;
+    grid-template-columns:
+      minmax(5.5rem, max-content) 1.25rem
+      repeat(var(--history-columns), minmax(12rem, 1fr));
+    grid-template-rows:
+      repeat(calc(var(--history-rows) - 1), auto 2.5rem) auto auto;
+  }
+  .history-chain > * {
+    grid-column: var(--col, 1) / var(--col-end, auto);
+    grid-row: var(--row, auto) / var(--row-end, auto);
+  }
+  .history-axis--y {
+    @apply block h-full border-r border-greyscale-200;
+    --col: 1;
+    --row: 1;
+  }
+  .history-axis--x {
+    @apply block h-0 self-start border-t border-greyscale-200;
+    --col: 2;
+    --col-end: -1;
+  }
+  .history-chain__head {
+    @apply m-0 hidden self-start px-2 pt-1.5 text-center text-[0.6875rem] leading-tight text-greyscale-500 md:block;
+  }
+  .history-chain__axis-label {
+    @apply m-0 hidden self-start pr-3 pt-1.5 text-right text-[0.6875rem] text-greyscale-500 md:block;
+    --col: 1;
+  }
+  .history-time {
+    @apply m-0 self-center pr-3 text-right text-[0.6875rem] tabular-nums text-greyscale-500;
+    --col: 1;
+  }
+  .history-time__note {
+    @apply block text-[0.625rem] text-greyscale-500;
+  }
+  .history-step {
+    @apply relative z-[1] mx-2 my-1 self-center rounded-flat border border-greyscale-200 bg-white px-3 py-2 text-left;
+  }
+  .history-step--self {
+    @apply border-primary-300 bg-primary-25;
+  }
+  .history-step--reported {
+    @apply border-dashed bg-greyscale-25;
+  }
+  .history-move {
+    @apply relative;
+  }
+  .history-move__stub,
+  .history-move__rail {
+    @apply absolute block bg-greyscale-300;
+  }
+  .history-move__rail {
+    @apply top-1/2 h-px;
+    left: var(--history-inset, 50%);
+    right: var(--history-inset, 50%);
+  }
+  .history-move__stub {
+    @apply w-px;
+  }
+  .history-move__stub--from {
+    @apply bottom-0 top-1/2;
+  }
+  .history-move__stub--to {
+    @apply top-0 h-1/2;
+  }
+  .history-move--up .history-move__stub--from,
+  .history-move--down .history-move__stub--to {
+    left: var(--history-inset, 50%);
+  }
+  .history-move--up .history-move__stub--to,
+  .history-move--down .history-move__stub--from {
+    right: var(--history-inset, 50%);
+  }
+  .history-move--same .history-move__stub--from,
+  .history-move--same .history-move__stub--to {
+    left: 50%;
+  }
+  .history-key {
+    @apply m-0 mt-2 flex list-none flex-wrap gap-x-5 gap-y-1 p-0 text-[0.6875rem] leading-snug text-greyscale-500;
+  }
+  .history-key li {
+    @apply flex items-center gap-1.5;
+  }
+  .history-key__swatch {
+    @apply inline-block h-3 w-5 flex-shrink-0 rounded-mark border border-greyscale-300 bg-white;
+  }
+  .history-key__swatch--self {
+    @apply border-primary-300 bg-primary-25;
+  }
+  .history-key__swatch--reported {
+    @apply border-dashed border-greyscale-400 bg-greyscale-25;
+  }
+  .history-node__court {
+    @apply m-0 text-xs font-medium leading-tight text-greyscale-900;
+  }
+  .history-node__tier {
+    @apply m-0 text-[0.6875rem] text-greyscale-500 md:hidden;
+  }
+  .history-node__case {
+    @apply m-0 mt-0.5 text-xs leading-snug text-greyscale-600;
+  }
+  .history-node__link {
+    @apply text-greyscale-700 no-underline hover:text-primary-700 hover:underline;
+  }
+  .history-node__flag {
+    @apply m-0 mt-1 text-[0.6875rem] leading-tight text-greyscale-500;
+  }
+  .history-node__act {
+    @apply m-0 mt-1.5 flex flex-wrap items-center gap-1 text-[0.6875rem] text-greyscale-600;
+  }
+  .history-node__here {
+    @apply m-0 mt-1 text-[0.6875rem] font-medium text-primary-700;
+  }
+  .history-node__meta {
+    @apply mt-1.5;
+  }
+  .history-node__meta-summary {
+    @apply inline-flex cursor-pointer items-center gap-1 rounded-control text-[0.6875rem] text-greyscale-500 hover:text-greyscale-900;
+  }
+  @media (max-width: 767px) {
+    .history-chain {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: none;
+    }
+    .history-chain > * {
+      grid-column: 1;
+      grid-row: auto;
+    }
+    .history-axis,
+    .history-move__rail,
+    .history-move__stub--from {
+      @apply hidden;
+    }
+    .history-move {
+      @apply flex flex-col items-center py-1;
+    }
+    .history-move__stub--to {
+      @apply relative h-5;
+      left: auto;
+      right: auto;
+    }
+    .history-time {
+      @apply pl-2 pr-0 text-left text-greyscale-500;
+    }
+  }
+}

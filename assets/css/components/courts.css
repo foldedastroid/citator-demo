@@ -1,0 +1,98 @@
+@layer components {
+  .court-open {
+    @apply flex w-full justify-between gap-2 px-3 text-left font-normal;
+  }
+  .court-chips {
+    @apply mt-2 flex flex-wrap items-center gap-1.5;
+  }
+  .court-chip {
+    @apply inline-flex items-center gap-1 rounded-mark border border-greyscale-200 bg-white px-1.5 py-0.5 text-xs text-greyscale-700 transition-colors hover:border-greyscale-300 hover:bg-greyscale-50 hover:text-greyscale-900;
+  }
+  .court-chip__x {
+    @apply text-greyscale-400;
+  }
+  .court-chip:hover .court-chip__x {
+    @apply text-greyscale-900;
+  }
+  .court-chips__clear {
+    @apply mt-0;
+  }
+  .court-modal {
+    @apply fixed inset-0 z-dialog flex items-center justify-center p-4;
+  }
+  .court-modal__backdrop {
+    background: theme('colors.scrim');
+    backdrop-filter: blur(3px);
+    @apply absolute inset-0;
+  }
+  .court-modal__dialog {
+    @apply relative flex max-h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-dialog border border-line-pop bg-white shadow-dialog;
+  }
+  .court-modal__head {
+    @apply flex items-center justify-between gap-4 border-b border-greyscale-200 px-6 py-4;
+  }
+  .court-modal__title {
+    @apply m-0 text-lg font-semibold tracking-tight;
+  }
+  .court-modal__close {
+    @apply rounded-control p-1 text-greyscale-500 transition-colors hover:bg-greyscale-100 hover:text-greyscale-900;
+  }
+  .court-modal__tools {
+    @apply flex flex-col gap-3 px-6 pt-4 sm:flex-row sm:items-center;
+  }
+  .court-modal__btns {
+    @apply flex flex-wrap gap-1.5;
+  }
+  .court-btn {
+    @apply px-2.5 py-1 text-xs;
+  }
+  .court-modal__tabs {
+    @apply mt-4 flex gap-2 overflow-x-auto border-b border-greyscale-200 px-6;
+  }
+  .court-tab {
+    @apply flex shrink-0 items-center gap-1.5 border-b-2 border-transparent px-1.5 py-2 text-sm text-greyscale-500 transition-colors hover:text-greyscale-900;
+  }
+  .court-tab.is-active {
+    @apply border-greyscale-900 font-medium text-greyscale-900;
+  }
+  .court-tab__count {
+    @apply text-xs tabular-nums text-greyscale-500;
+  }
+  .court-modal__body {
+    @apply flex-1 overflow-y-auto px-6 py-5;
+    overscroll-behavior: contain;
+  }
+  .court-cols {
+    @apply gap-x-8 sm:columns-2 lg:columns-3;
+  }
+  .court-group {
+    @apply mb-5 break-inside-avoid;
+  }
+  .court-group__head {
+    @apply flex cursor-pointer items-center gap-2 text-sm font-medium text-greyscale-900;
+  }
+  .court-group__list {
+    @apply m-0 mt-1 list-none pl-0;
+  }
+  .court-option {
+    @apply flex cursor-pointer items-start gap-2 py-0.5 text-sm text-greyscale-700 hover:text-greyscale-900;
+  }
+  .court-option .checkbox {
+    @apply mt-0.5;
+  }
+  .court-option--d1 {
+    @apply pl-4;
+  }
+  .court-option--d2 {
+    @apply pl-8;
+  }
+  .court-option--d3 {
+    @apply pl-12;
+  }
+  .court-empty {
+    @apply m-0 text-sm text-greyscale-500;
+  }
+  .court-modal__foot {
+    @apply flex min-h-[62px] items-center justify-between gap-4 border-t border-greyscale-200 bg-greyscale-25 px-6 py-3;
+  }
+}

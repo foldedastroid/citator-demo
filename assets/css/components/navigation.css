@@ -1,0 +1,124 @@
+@layer components {
+  .tree-filter {
+    @apply relative mb-3 block px-0.5;
+  }
+  .tree-filter__icon {
+    @apply pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-greyscale-500;
+  }
+  .tree-filter input {
+    @apply block h-8 w-full rounded-control border border-greyscale-200 bg-white pl-8 pr-2 text-[13px] text-greyscale-900 placeholder:text-greyscale-400 focus:border-greyscale-400 focus:outline-none;
+  }
+  :is(.search-box, .list-search__input, .sort-select__input, .tree-filter input):focus-visible {
+    outline: 2px solid theme('colors.primary.600');
+    outline-offset: -2px;
+  }
+  .tree-filter input::-webkit-search-cancel-button {
+    display: none;
+  }
+  .tree-section + .tree-section {
+    @apply mt-4;
+  }
+  .tree-section__title {
+    @apply m-0 mb-1 flex min-h-[26px] items-center px-2.5 text-[11px] font-semibold tracking-normal text-greyscale-500;
+  }
+  .tree {
+    @apply m-0 flex list-none flex-col gap-px p-0;
+  }
+  .tree-row {
+    @apply relative flex h-8 min-w-0 items-center rounded-control text-[13px] text-greyscale-700 no-underline transition-colors hover:bg-greyscale-100 hover:text-greyscale-900;
+  }
+  .tree-row.is-active,
+  .tree-row[aria-current="page"] {
+    @apply bg-greyscale-200/70 font-medium text-greyscale-900;
+  }
+  .tree-row--plain {
+    @apply gap-2.5 px-2.5;
+  }
+  .tree-link {
+    @apply flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-control pl-2.5 pr-1 text-inherit no-underline;
+  }
+  .tree-icon {
+    @apply h-4 w-4 flex-shrink-0 text-greyscale-500;
+  }
+  .tree-row:hover .tree-icon,
+  .tree-row.is-active .tree-icon,
+  .tree-row[aria-current="page"] .tree-icon {
+    @apply text-greyscale-800;
+  }
+  .tree-label {
+    @apply min-w-0 flex-1 truncate;
+  }
+  .tree-badge {
+    @apply ml-auto min-w-[20px] flex-shrink-0 rounded-full bg-greyscale-100 px-1.5 text-center text-[11px] font-semibold leading-[18px] tabular-nums text-greyscale-600;
+  }
+  .tree-count {
+    @apply ml-auto flex-shrink-0 pl-2 text-[11px] tabular-nums text-greyscale-500;
+  }
+  .tree-toggle {
+    @apply mr-0.5 inline-flex h-[26px] w-[26px] flex-shrink-0 items-center justify-center rounded-control text-greyscale-400 transition-colors hover:bg-greyscale-200 hover:text-greyscale-900;
+  }
+  .tree-chevron {
+    @apply h-3.5 w-3.5 transition-transform;
+  }
+  .tree-toggle[aria-expanded="true"] .tree-chevron {
+    transform: rotate(90deg);
+  }
+  .tree-sub {
+    @apply relative m-0 mb-1 ml-[18px] mt-0.5 flex list-none flex-col gap-px p-0 pl-2.5;
+  }
+  .tree-sub::before {
+    @apply absolute bottom-0.5 left-0 top-0.5 w-px bg-greyscale-200;
+    content: "";
+  }
+  .tree-sub[hidden] {
+    display: none;
+  }
+  .tree-sub--cases .tree-row {
+    @apply h-7 text-[12.5px];
+  }
+  .tree-sub--cases .tree-link {
+    @apply gap-2 pl-2;
+  }
+  .tree-signal {
+    @apply inline-flex flex-shrink-0;
+  }
+  .tree-signal__mark {
+    @apply h-3 w-3;
+  }
+  .tree-subrow {
+    @apply flex h-7 min-w-0 items-center rounded-control px-2.5 text-[12.5px] text-greyscale-600 no-underline transition-colors hover:bg-greyscale-100 hover:text-greyscale-900;
+  }
+  .tree-subrow[aria-current="location"] {
+    @apply bg-greyscale-200/70 font-medium text-greyscale-900;
+  }
+  .tree-empty {
+    @apply m-0 px-2.5 py-1.5 text-xs text-greyscale-500;
+  }
+
+  .sheet kbd {
+    @apply rounded-mark border border-greyscale-200 bg-white px-1 font-sans text-[10px] leading-4 text-greyscale-500;
+  }
+
+  .sheet {
+    @apply m-auto mt-[min(12vh,96px)] flex-col overflow-hidden rounded-dialog border border-line-pop bg-white p-0 text-greyscale-900 shadow-dialog;
+    width: min(620px, calc(100vw - 32px));
+    max-height: min(530px, calc(100dvh - min(12vh, 96px) - 20px));
+  }
+  .sheet[open] {
+    display: flex;
+    animation: sheet-in theme('transitionDuration.popover') cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .sheet::backdrop {
+    background: theme('colors.scrim');
+    backdrop-filter: blur(3px);
+  }
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+      transform: translateY(5px) scale(0.995);
+    }
+  }
+  .sheet__esc {
+    @apply rounded-mark border border-greyscale-200 px-1.5 text-[10px] leading-5 text-greyscale-500 hover:text-greyscale-900;
+  }
+}

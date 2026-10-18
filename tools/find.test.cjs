@@ -1,16 +1,14 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
+const { loadReader } = require('./reader-harness.cjs');
 
 function fixture(reduced = false) {
-  let factory;
   const animations = [];
   let inputFocus = 0;
   let buttonFocus = 0;
   let currentWidth = 32;
   let bodyReads = 0;
+  let selection = { removeAllRanges() {} };
   const history = [];
   const style = { getPropertyValue: name => name === '--find-duration' ? '200ms' : 'ease-out' };
   const card = {
@@ -25,20 +23,22 @@ function fixture(reduced = false) {
   };
   const context = {
     document: { addEventListener: (_, listener) => listener(), querySelector: () => ({ getBoundingClientRect: () => ({ bottom: 148 }) }), querySelectorAll: () => [], getElementById: () => null, documentElement: { scrollHeight: 1000 } },
-    Alpine: { data: (_, value) => { factory = value; } },
-    window: { innerWidth: 375, innerHeight: 812, scrollY: 0, scrollTo() {}, matchMedia: () => ({ matches: reduced }), getSelection: () => ({ removeAllRanges() {} }) },
+    window: { innerWidth: 375, innerHeight: 812, scrollY: 0, scrollTo() {}, matchMedia: () => ({ matches: reduced }), getSelection: () => selection },
     history: { pushState: (_, __, value) => history.push(value), replaceState: (_, __, value) => history.push(value) },
     cancelAnimationFrame() {},
-    requestAnimationFrame: callback => { callback(); return 1; },
+    setTimeout() { return 1; },
+    clearTimeout() {},
+    requestAnimationFrame: () => 1,
     getComputedStyle: () => style,
     stickyBottom: () => 148,
   };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/alpine/components/opinion_tabs.js'), 'utf8'), context);
-  const state = factory();
+  const reader = loadReader(context);
+  const state = reader.create();
   state.$nextTick = callback => callback();
   state.$refs = {
     findCard: card,
     findMatches: { replaceChildren() {} },
+    selBar: { offsetWidth: 280, offsetHeight: 32 },
     findAnchor: { offsetParent: {}, getBoundingClientRect: () => ({ left: 16, bottom: 232 }) },
     findButton: { offsetParent: {}, getBoundingClientRect: () => ({ left: 280, right: 308, top: 200, height: 28, width: 28 }), focus: () => buttonFocus++ },
     findInput: { focus: () => inputFocus++, select() {} },
@@ -49,7 +49,13 @@ function fixture(reduced = false) {
     return null;
   } };
   state.findShow = () => {};
-  return { state, card, animations, history, bodyReads: () => bodyReads, select: text => vm.runInNewContext(`selText = ${JSON.stringify(text)}`, context), setWidth: width => { currentWidth = width; }, focus: () => ({ input: inputFocus, button: buttonFocus }) };
+  return { state, card, animations, history, bodyReads: () => bodyReads, select: text => {
+    selection = { isCollapsed: false, rangeCount: 1, toString: () => text, removeAllRanges() {}, getRangeAt: () => ({ commonAncestorContainer: {}, getBoundingClientRect: () => ({ top: 200, bottom: 230, left: 16, width: 280 }) }) };
+    const page = state.pageRoot;
+    state.pageRoot = { querySelector: selector => selector === '.case-head' ? { getBoundingClientRect: () => ({ bottom: 148 }) } : { contains: () => true } };
+    state.onSelection();
+    state.pageRoot = page;
+  }, setWidth: width => { currentWidth = width; }, focus: () => ({ input: inputFocus, button: buttonFocus }) };
 }
 
 test('Find expands right from one control, focuses after completion, and reverses from its actual width', async () => {

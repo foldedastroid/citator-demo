@@ -1,0 +1,139 @@
+@layer components {
+  .about-hint {
+    @apply relative;
+  }
+  .about-hint__link--active {
+    @apply bg-greyscale-100 text-greyscale-900;
+  }
+  .split {
+    @apply relative inline-flex;
+  }
+  .doc-action--main {
+    @apply rounded-r-none;
+  }
+  .doc-action__arrow-well {
+    @apply relative inline-block h-3.5 w-3.5 shrink-0 overflow-hidden;
+  }
+  .doc-action__arrow {
+    @apply absolute inset-0;
+    transition: transform 320ms theme('transitionTimingFunction.standard'), opacity 240ms linear;
+  }
+  .doc-action__arrow--arriving {
+    transform: translate(-1rem, 1rem);
+    opacity: 0;
+  }
+  .doc-action--external:focus-visible .doc-action__arrow--leaving {
+    transform: translate(1rem, -1rem);
+    opacity: 0;
+  }
+  .doc-action--external:focus-visible .doc-action__arrow--arriving {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+  @media (hover: hover) {
+    .doc-action--external:hover .doc-action__arrow--leaving {
+      transform: translate(1rem, -1rem);
+      opacity: 0;
+    }
+    .doc-action--external:hover .doc-action__arrow--arriving {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .doc-action--external .doc-action__arrow {
+      transition: none;
+    }
+    .doc-action--external .doc-action__arrow--leaving {
+      transform: none !important;
+      opacity: 1 !important;
+    }
+    .doc-action--external .doc-action__arrow--arriving {
+      transform: none !important;
+      opacity: 0 !important;
+    }
+  }
+  .doc-action--caret {
+    @apply -ml-px w-7 justify-center rounded-l-none px-0;
+  }
+  .doc-action--caret[aria-expanded="true"] {
+    @apply border-greyscale-300 bg-greyscale-100 text-greyscale-900;
+  }
+  .doc-action--caret svg {
+    transition: transform 150ms theme('transitionTimingFunction.standard');
+  }
+  .doc-action--caret[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+  }
+  .cite-menu {
+    @apply w-72;
+  }
+  .cite-menu__item {
+    @apply flex w-full flex-col items-start gap-0.5 bg-transparent px-3 py-1.5 text-left transition-colors hover:bg-greyscale-50 focus:outline-none focus-visible:bg-greyscale-100;
+  }
+  .cite-menu__name {
+    @apply text-[13px] text-greyscale-900;
+  }
+  .cite-menu__sample {
+    @apply w-full truncate text-[11px] text-greyscale-500;
+  }
+  .help-menu {
+    @apply relative;
+  }
+  .help-menu__panel {
+    @apply absolute right-0 top-full z-menu mt-1.5 w-56 rounded-popover border border-line-pop bg-white pb-1.5 pt-1 shadow-overlay;
+  }
+  .help-menu__panel:not(.is-open) {
+    display: none;
+  }
+  .help-menu__label {
+    @apply m-0 px-3 pb-1 pt-1.5 text-[11px] font-medium text-greyscale-500;
+  }
+  .help-menu__item {
+    @apply flex min-h-[30px] w-full items-center gap-2.5 bg-transparent px-3 text-left text-[13px] text-greyscale-800 no-underline transition-colors hover:text-greyscale-950 hover:underline focus:underline focus:outline-none;
+  }
+  .help-menu__item:focus-visible {
+    @apply bg-greyscale-50;
+  }
+  .help-menu__icon {
+    @apply h-4 w-4 flex-shrink-0 text-greyscale-500;
+  }
+  .help-menu__kbd {
+    @apply ml-auto rounded-mark border border-greyscale-200 px-1 font-mono text-[10px] leading-4 text-greyscale-500 no-underline;
+  }
+  .about-hint__bubble {
+    @apply absolute right-0 top-full z-popover mt-2 flex w-72 items-start gap-2 rounded-popover border border-line-pop bg-white py-2.5 pl-3 pr-2 text-xs leading-relaxed text-greyscale-700 shadow-overlay;
+  }
+  .about-hint__text {
+    @apply m-0;
+  }
+  .about-hint__text strong {
+    @apply font-medium text-greyscale-900;
+  }
+  .about-hint__close {
+    @apply flex-shrink-0 rounded-control p-1 text-greyscale-400 transition-colors hover:bg-greyscale-100 hover:text-greyscale-900;
+  }
+  :is(.doc-action, .list-filter__summary, .start-panel__button, .sel-bar__btn, .occ-pop__action, .home-pager__btn, .court-open, .court-btn, .court-chip, .list-filter__clear, .severity-clear, .court-chips__clear, .help-menu__item, .sev-toggle) {
+    transition-property: color, background-color, border-color, transform;
+    transition-duration: theme('transitionDuration.feedback');
+    transition-timing-function: theme('transitionTimingFunction.standard');
+  }
+  :is(.doc-action, .list-filter__summary, .start-panel__button, .sel-bar__btn, .home-pager__btn, .court-open, .court-btn, .court-chip, .sev-toggle):not(:disabled):active {
+    @apply bg-greyscale-100;
+    transform: translateY(1px);
+  }
+  :is(.occ-pop__action, .list-filter__clear, .severity-clear, .court-chips__clear, .help-menu__item):not(:disabled):active {
+    transform: translateY(1px);
+  }
+  :is(.pane-toggle, .occ-step__btn, .occ-pop__close, .tree-toggle, .doc-rail__find, .about-hint__close, .narrow-chip__clear, .sheet__esc, .court-modal__close) {
+    transition-property: color, background-color, transform, opacity;
+  }
+  :is(.pane-toggle, .occ-step__btn, .occ-pop__close, .tree-toggle, .doc-rail__find, .about-hint__close, .narrow-chip__clear, .sheet__esc, .court-modal__close):not(:disabled):active {
+    transform: scale(0.94);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :is(.doc-action, .list-filter__summary, .start-panel__button, .sel-bar__btn, .home-pager__btn, .court-open, .court-btn, .court-chip, .sev-toggle, .occ-pop__action, .list-filter__clear, .severity-clear, .court-chips__clear, .help-menu__item, .pane-toggle, .occ-step__btn, .occ-pop__close, .tree-toggle, .doc-rail__find, .about-hint__close, .narrow-chip__clear, .sheet__esc, .court-modal__close):active {
+      transform: none;
+    }
+  }
+}

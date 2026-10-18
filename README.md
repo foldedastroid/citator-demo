@@ -60,8 +60,8 @@ The shell supports desktop panels and phone drawers, keyboard navigation and red
 |---|---|
 | `src/` | Page entry templates. |
 | `_includes/layouts/`, `macros/`, `partials/` | Shared shell, reusable markup and opinion sections. |
-| `assets/css/` | Tailwind source and component styles. |
-| `assets/js/alpine/` | CSP-compatible page and list controllers. |
+| `assets/css/` | Ordered Tailwind entry point and feature styles under `components/`. |
+| `assets/js/alpine/` | CSP-compatible controllers and reader feature factories under `composables/`. |
 | `assets/js/` | Shared reading, tooltip, search and navigation behavior. |
 | `scripts/` | Data loading, citation processing, taxonomy, rendering and Python tests. |
 | `tools/` | Template filters, chart aggregation, token export and JavaScript tests. |
@@ -71,7 +71,7 @@ The shell supports desktop panels and phone drawers, keyboard navigation and red
 
 `tailwind.config.js` is the design-token source. Regenerate the explicit inventory with `npm run build:tokens`; see [design/README.md](design/README.md). Repeated interface patterns use existing Nunjucks macros and component CSS rather than a second runtime framework.
 
-For a scoped upstream contribution, see my [adoption notes](docs/adoption.md).
+The reader controller owns tabs and lifecycle; Find, citation occurrences, popovers and passage actions have separate per-reader factories. `src/opinion.njk` declares their script order before Alpine starts. The [adoption notes](docs/adoption.md) describe the feature boundaries and dependencies for a scoped upstream contribution.
 
 ## Checks
 
