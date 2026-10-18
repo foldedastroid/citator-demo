@@ -37,11 +37,14 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <a href="#footer" class="skip-link">Skip to footer</a>
 
+    <button type="button" class="sidebar-drag-edge" tabindex="-1" aria-hidden="true"
+            title="Drag to open or close sidebar" x-on:pointerdown="startSidebarDrag"
+            x-on:pointermove="moveSidebarDrag" x-on:pointerup="endSidebarDrag"
+            x-on:pointercancel="cancelSidebarDrag" x-on:lostpointercapture="cancelSidebarDrag"></button>
     <div class="app-shell">
 
       <aside id="app-sidebar" class="app-sidebar" aria-label="Site" x-on:click="onSidebarClick"
              x-on:touchstart.passive="onSidebarTouchStart" x-on:touchmove.passive="onSidebarTouchMove" x-on:touchend="onSidebarTouchEnd">
-        <button type="button" class="app-sidebar__rail" tabindex="-1" aria-hidden="true" title="Hide sidebar (⌘\)" x-on:click.stop="toggleSidebar"></button>
         <header class="app-sidebar__header">
           <a href="{{ site.home }}" class="app-wordmark" title="Return to Search opinions">
             <span class="app-wordmark__org">Free Law Project</span>

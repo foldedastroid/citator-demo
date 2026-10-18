@@ -164,6 +164,12 @@
   .occ-pop__kind {
     @apply min-w-0 flex-1 truncate;
   }
+  .occ-pop--citation .occ-pop__head {
+    @apply items-start justify-between gap-3;
+  }
+  .occ-pop--citation .occ-pop__title {
+    @apply m-0 min-w-0 flex-1;
+  }
   .occ-pop__close {
     @apply inline-flex min-h-[22px] min-w-[22px] items-center justify-center rounded-control p-[3px] text-greyscale-400 transition-colors hover:text-greyscale-900;
   }
@@ -221,7 +227,7 @@
     overflow: hidden;
   }
   .occ-pop__foot {
-    @apply mt-[9px] flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-greyscale-100 pt-[9px];
+    @apply mt-[9px] flex flex-wrap items-center justify-end gap-x-3 gap-y-2 border-t border-greyscale-100 pt-[9px];
   }
   .occ-pop__action {
     @apply inline-flex items-center gap-1 rounded-mark text-[10px] leading-[1.4] text-primary-600 no-underline hover:text-primary-700 hover:underline;

@@ -20,18 +20,36 @@
     transform: translateX(-100%);
     transition: transform theme('transitionDuration.expansion') theme('transitionTimingFunction.standard'), visibility 0s linear theme('transitionDuration.expansion');
   }
-  .app-sidebar__rail {
-    @apply absolute inset-y-0 right-0 z-rail hidden w-3 cursor-w-resize bg-transparent lg:block;
+  .sidebar-drag-edge {
+    @apply fixed inset-y-0 z-drawer hidden w-3 cursor-col-resize bg-transparent lg:block;
+    left: max(0px, calc(var(--sidebar-w) - 6px));
+    touch-action: none;
+    transition: left theme('transitionDuration.expansion') theme('transitionTimingFunction.standard');
   }
-  .app-sidebar__rail::after {
-    @apply absolute inset-y-0 right-0 w-px bg-transparent transition-colors duration-100;
+  .sidebar-closed .sidebar-drag-edge { left: 0; }
+  .sidebar-drag-edge::after {
+    @apply absolute inset-y-0 left-1/2 w-px bg-transparent;
     content: '';
   }
-  .app-sidebar__rail:hover::after {
-    @apply bg-greyscale-300;
+  .sidebar-drag-edge:hover::after,
+  .is-sidebar-dragging .sidebar-drag-edge::after { @apply bg-greyscale-400; }
+  .is-sidebar-dragging { cursor: col-resize; user-select: none; }
+  .is-sidebar-dragging .app-shell {
+    grid-template-columns: var(--sidebar-drag-width) minmax(0, 1fr);
+    transition: none;
   }
-  .app-sidebar__rail:focus-visible {
-    outline: none;
+  .is-sidebar-dragging .app-sidebar {
+    visibility: visible;
+    transform: translateX(calc(var(--sidebar-drag-width) - var(--sidebar-w)));
+    transition: none;
+  }
+  .is-sidebar-dragging .sidebar-drag-edge {
+    left: max(0px, calc(var(--sidebar-drag-width) - 6px));
+    transition: none;
+  }
+  .is-resizing .sidebar-drag-edge { transition: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .sidebar-drag-edge { transition: none; }
   }
   .app-sidebar {
     @apply relative;

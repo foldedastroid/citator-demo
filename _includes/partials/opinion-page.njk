@@ -233,8 +233,8 @@
           <p class="trail__court">{{ step.court }}</p>
           <p class="trail__meta">
             <span class="tabular-nums">{{ step.date_filed | usdate if step.date_filed else "Undated" }}</span>
-            {% if step.role == "self" %}<span class="trail__here">This opinion</span>
-            {% elif step.case_name and step.url and step.cluster_id in pageIds %}<a href="{{ step.url }}" class="trail__case" title="{{ step.case_name }}">{{ step.case_name }}</a>{% endif %}
+            {% if step.role == "self" %}<span class="trail__separator" aria-hidden="true">·</span><span class="trail__here">This opinion</span>
+            {% elif step.case_name and step.url and step.cluster_id in pageIds %}<span class="trail__separator" aria-hidden="true">·</span><a href="{{ step.url }}" class="trail__case" title="{{ step.case_name }}">{{ step.case_name }}</a>{% endif %}
           </p>
           {% for act in step.acts %}{% for t in act.treatments %}
           <p class="trail__act">{{ signal(t.severity, "trail__mark") }}{{ t.text or t.treatment }}</p>
@@ -327,19 +327,17 @@
     <button type="button" class="sel-bar__btn" x-on:click="selFind">{{ icon("search", "w-3.5 h-3.5") }}Find</button>
   </div>
 
-  <div class="occ-pop" x-ref="occCard" x-cloak role="dialog" aria-labelledby="occ-pop-title"
+  <div class="occ-pop occ-pop--citation" x-ref="occCard" x-cloak role="dialog" aria-labelledby="occ-pop-title"
        x-bind:class="occNavClass" x-bind:style="occNavStyle"
        x-on:keydown.escape.window="occEscape" x-on:click.outside="occClickOutside"
        x-on:pointerenter="occHold" x-on:pointerleave="occRelease"
        x-on:focusin="occHold" x-on:focusout="occRelease">
     <header class="occ-pop__head">
-      <span class="occ-pop__mark" aria-hidden="true">{{ icon("document", "w-2.5 h-2.5") }}</span>
-      <span class="occ-pop__kind">Cited case</span>
+      <h3 id="occ-pop-title" class="occ-pop__title" x-text="occNavName"></h3>
       <button type="button" class="occ-pop__close" x-on:click="occEscape" aria-label="Close case preview">
         {{ icon("close", "w-[13px] h-[13px]") }}
       </button>
     </header>
-    <h3 id="occ-pop-title" class="occ-pop__title" x-text="occNavName"></h3>
     <div class="occ-pop__scrub">
       <span class="occ-pop__scrub-label" x-text="occNavCount" aria-live="polite"></span>
       <span class="occ-step" role="group" aria-label="Occurrences of this case in the opinion" x-show="occNavMany">

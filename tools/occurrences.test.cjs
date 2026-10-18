@@ -93,3 +93,17 @@ test('modifier-click keeps native case navigation and ordinary click pins the oc
   assert.equal(state.occPinned, true);
   assert.equal(state.occNavCount, 'Only occurrence');
 });
+
+test('moving between a citation and its preview cancels dismissal instead of restarting the popup', () => {
+  const source = link('/opinion/118449/', 'Saucier');
+  const { state } = fixture([source]);
+  const child = {};
+  source.contains = node => node === source;
+  state.$refs.occCard = { contains: node => node === child };
+  state.occOpen(source);
+  state.occRelease({ relatedTarget: child });
+  assert.equal(state.occNav.open, true);
+  assert.equal(state.occCloseTimer, 0);
+  state.occRelease({ relatedTarget: source });
+  assert.equal(state.occNav.open, true);
+});

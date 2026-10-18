@@ -40,3 +40,40 @@ test('continuous resize suppresses layout transitions until two quiet frames, in
   assert.equal(frames.size, 0);
   assert.equal(state.resizeFrame, 0);
 });
+
+test('sidebar edge drag settles, persists, reopens, and restores on cancellation', () => {
+  let factory;
+  const classes = new Set();
+  const styles = new Map();
+  const saved = new Map();
+  const root = { classList: { add: x => classes.add(x), remove: x => classes.delete(x) },
+    style: { setProperty: (k, v) => styles.set(k, v), removeProperty: k => styles.delete(k) } };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/alpine/components/app_shell.js'), 'utf8'), {
+    document: { documentElement: root, addEventListener: (_, f) => f(),
+      getElementById: () => ({ getBoundingClientRect: () => ({ width: 248 }) }) },
+    localStorage: { setItem: (k, v) => saved.set(k, v) },
+    Alpine: { data: (_, f) => { factory = f; } },
+  });
+  const state = factory();
+  state.apply = () => {};
+  let captured = false;
+  const target = { setPointerCapture() { captured = true; }, hasPointerCapture: () => captured,
+    releasePointerCapture() { captured = false; } };
+  const event = x => ({ button: 0, pointerId: 1, clientX: x, currentTarget: target, preventDefault() {} });
+  state.startSidebarDrag(event(248));
+  state.moveSidebarDrag(event(80));
+  assert.equal(styles.get('--sidebar-drag-width'), '80px');
+  state.endSidebarDrag(event(10));
+  assert.equal(state.sidebarOpen, false);
+  assert.equal(saved.get('citator-sidebar'), 'closed');
+  assert.equal(captured, false);
+  state.startSidebarDrag(event(0));
+  state.endSidebarDrag(event(200));
+  assert.equal(state.sidebarOpen, true);
+  state.startSidebarDrag(event(248));
+  state.moveSidebarDrag(event(0));
+  state.cancelSidebarDrag();
+  assert.equal(state.sidebarOpen, true);
+  assert.equal(classes.has('is-sidebar-dragging'), false);
+  assert.equal(styles.has('--sidebar-drag-width'), false);
+});

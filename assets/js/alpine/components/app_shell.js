@@ -24,6 +24,7 @@ function shellStore(key, value) {
 document.addEventListener('alpine:init', () => {
   Alpine.data('appShell', () => ({
     sidebarOpen: true,
+    sidebarDrag: null,
     panelOpen: true,
     wide: true,
 
@@ -57,6 +58,46 @@ document.addEventListener('alpine:init', () => {
       const panel = document.getElementById('app-panel');
       if (sidebar) sidebar.inert = !this.sidebarOpen;
       if (panel) panel.inert = !this.panelOpen;
+    },
+
+    startSidebarDrag(event) {
+      if (!this.wide || event.button !== 0) return;
+      const sidebar = document.getElementById('app-sidebar');
+      if (!sidebar) return;
+      event.preventDefault();
+      const width = sidebar.getBoundingClientRect().width;
+      this.sidebarDrag = { id: event.pointerId, x: event.clientX, width,
+        start: this.sidebarOpen ? width : 0, value: this.sidebarOpen ? width : 0,
+        open: this.sidebarOpen, target: event.currentTarget };
+      event.currentTarget.setPointerCapture(event.pointerId);
+      const root = document.documentElement;
+      root.style.setProperty('--sidebar-drag-width', `${this.sidebarDrag.start}px`);
+      root.classList.add('is-sidebar-dragging');
+    },
+    moveSidebarDrag(event) {
+      const drag = this.sidebarDrag;
+      if (!drag || event.pointerId !== drag.id) return;
+      drag.value = Math.max(0, Math.min(drag.width, drag.start + event.clientX - drag.x));
+      document.documentElement.style.setProperty('--sidebar-drag-width', `${drag.value}px`);
+    },
+    finishSidebarDrag(cancelled) {
+      const drag = this.sidebarDrag;
+      if (!drag) return;
+      this.sidebarDrag = null;
+      this.sidebarOpen = cancelled ? drag.open : drag.value >= drag.width / 2;
+      const root = document.documentElement;
+      root.classList.remove('is-sidebar-dragging');
+      root.style.removeProperty('--sidebar-drag-width');
+      if (drag.target.hasPointerCapture(drag.id)) drag.target.releasePointerCapture(drag.id);
+      if (!cancelled) shellStore(SIDEBAR_KEY, this.sidebarOpen ? 'open' : 'closed');
+      this.apply();
+    },
+    endSidebarDrag(event) {
+      this.moveSidebarDrag(event);
+      this.finishSidebarDrag(false);
+    },
+    cancelSidebarDrag() {
+      this.finishSidebarDrag(true);
     },
 
     toggleSidebar() {
@@ -131,6 +172,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     onViewportResize() {
+      this.cancelSidebarDrag();
       const root = document.documentElement;
       root.classList.add('is-resizing');
       cancelAnimationFrame(this.resizeFrame);
@@ -144,6 +186,7 @@ document.addEventListener('alpine:init', () => {
 
     onKeydown(event) {
       if (event.key === 'Escape') {
+        this.cancelSidebarDrag();
         this.closeDrawer();
         return;
       }
@@ -177,6 +220,7 @@ document.addEventListener('alpine:init', () => {
       document.addEventListener('click', (e) => this.onPanelClick(e));
     },
     destroy() {
+      this.cancelSidebarDrag();
       cancelAnimationFrame(this.resizeFrame);
       window.removeEventListener('resize', this.resizeHandler);
       document.documentElement.classList.remove('is-resizing');

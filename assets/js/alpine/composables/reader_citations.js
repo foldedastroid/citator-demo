@@ -4,7 +4,7 @@ function createReaderCitations(lifecycle) {
   const OCC_GAP = 7;
   const OCC_EDGE = 8;
   const OCC_OPEN_MS = 180;
-  const OCC_CLOSE_MS = 160;
+  const OCC_CLOSE_MS = 260;
   const TIERS = ['stop', 'warning', 'caution', 'positive', 'neutral'];
   const EMPTY_ROW = { rationale: '', quote: '', hasAnalysis: false, item: 0, items: 0 };
   let occItems = [];
@@ -12,6 +12,7 @@ function createReaderCitations(lifecycle) {
 
   return {
     occPinned: false,
+    occPositioned: false,
     occNav: { key: '', open: false, n: 0, name: '', url: '', index: 0, total: 0, ...EMPTY_ROW },
     occPos: { left: 0, top: 0, width: OCC_WIDTH, below: false, originX: 0 },
     occOpenTimer: 0,
@@ -33,6 +34,7 @@ function createReaderCitations(lifecycle) {
     get occNavStyle() {
       if (this.occPinned) return {};
       return {
+        visibility: this.occPositioned ? 'visible' : 'hidden',
         left: `${this.occPos.left}px`,
         top: `${this.occPos.top}px`,
         width: `${this.occPos.width}px`,
@@ -166,6 +168,7 @@ function createReaderCitations(lifecycle) {
         this.$refs.occPillsPlain.replaceChildren();
         occItems = [];
       }
+      this.occPositioned = false;
       this.occNav = {
         key,
         open: true,
@@ -205,6 +208,7 @@ function createReaderCitations(lifecycle) {
       );
       const originX = Math.max(0, Math.min(width, rect.left + rect.width / 2 - left));
       this.occPos = { left: Math.round(left), top: Math.round(top), width, below, originX: Math.round(originX) };
+      this.occPositioned = true;
     },
     occNext() {
       if (!this.occNav.total) return;
@@ -231,6 +235,7 @@ function createReaderCitations(lifecycle) {
     occClose() {
       this.occClearTimers();
       this.occPinned = false;
+      this.occPositioned = false;
       this.occNav = { key: '', open: false, n: 0, name: '', url: '', index: 0, total: 0, ...EMPTY_ROW };
       this.$refs.occPills.replaceChildren();
       this.$refs.occPillsPlain.replaceChildren();
@@ -265,7 +270,13 @@ function createReaderCitations(lifecycle) {
     occHold() {
       this.occClearTimers();
     },
-    occRelease() {
+    occRelease(event) {
+      const next = event?.relatedTarget;
+      const current = this.occCurrent();
+      if (next && (this.$refs.occCard.contains(next) || current?.contains(next))) {
+        this.occHold();
+        return;
+      }
       this.occClearTimers();
       if (!this.occNav.open || this.occPinned) return;
       this.occCloseTimer = setTimeout(() => {
@@ -284,14 +295,14 @@ function createReaderCitations(lifecycle) {
     onCitationPointerOut(event) {
       const link = this.occLinkFor(event);
       if (!link || link.contains(event.relatedTarget)) return;
-      this.occRelease();
+      this.occRelease(event);
     },
     onCitationFocusIn(event) {
       const link = this.occLinkFor(event);
       if (link && !this.occSuppressFocus) this.occOpen(link);
     },
     onCitationFocusOut(event) {
-      if (this.occLinkFor(event)) this.occRelease();
+      if (this.occLinkFor(event)) this.occRelease(event);
     },
     onCitationKeydown(event) {
       if (event.key !== 'ArrowDown') return;
