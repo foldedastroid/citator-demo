@@ -46,11 +46,12 @@ test('sidebar edge drag settles, persists, reopens, and restores on cancellation
   const classes = new Set();
   const styles = new Map();
   const saved = new Map();
-  const root = { classList: { add: x => classes.add(x), remove: x => classes.delete(x) },
+  let visibleWidth;
+  const root = { classList: { add: x => classes.add(x), remove: x => classes.delete(x), toggle: (x, on) => on ? classes.add(x) : classes.delete(x) },
     style: { setProperty: (k, v) => styles.set(k, v), removeProperty: k => styles.delete(k) } };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/alpine/components/app_shell.js'), 'utf8'), {
     document: { documentElement: root, addEventListener: (_, f) => f(),
-      getElementById: () => ({ getBoundingClientRect: () => ({ width: 248 }) }) },
+      getElementById: () => ({ getBoundingClientRect: () => ({ width: 248, right: visibleWidth ?? (state.sidebarOpen ? 248 : 0) }) }) },
     clearTimeout() {},
     localStorage: { setItem: (k, v) => saved.set(k, v) },
     Alpine: { data: (_, f) => { factory = f; } },
@@ -58,7 +59,7 @@ test('sidebar edge drag settles, persists, reopens, and restores on cancellation
   const state = factory();
   state.apply = () => {};
   let captured = false;
-  const target = { setPointerCapture() { captured = true; }, hasPointerCapture: () => captured,
+  const target = { getBoundingClientRect: () => ({ left: state.sidebarOpen ? 242 : 0 }), setPointerCapture() { captured = true; }, hasPointerCapture: () => captured,
     releasePointerCapture() { captured = false; } };
   const event = x => ({ button: 0, pointerId: 1, clientX: x, currentTarget: target, preventDefault() {} });
   state.startSidebarDrag(event(248));
@@ -77,6 +78,21 @@ test('sidebar edge drag settles, persists, reopens, and restores on cancellation
   assert.equal(state.sidebarOpen, true);
   assert.equal(classes.has('is-sidebar-dragging'), false);
   assert.equal(styles.has('--sidebar-drag-width'), false);
+  state.sidebarOpen = false;
+  state.sidebarPeek = true;
+  visibleWidth = 120;
+  state.startSidebarDrag(event(5));
+  assert.equal(styles.get('--sidebar-drag-width'), '120px');
+  assert.equal(styles.get('--sidebar-drag-edge'), '0px');
+  assert.equal(classes.has('is-sidebar-preview-drag'), true);
+  state.moveSidebarDrag(event(45));
+  assert.equal(styles.get('--sidebar-drag-width'), '160px');
+  assert.equal(styles.get('--sidebar-drag-edge'), '40px');
+  state.endSidebarDrag(event(145));
+  assert.equal(state.sidebarOpen, true);
+  assert.equal(classes.has('is-sidebar-preview-drag'), false);
+  assert.equal(styles.has('--sidebar-drag-edge'), false);
+
 });
 
 test('hover preview closes after leaving, preserves focused content, and never persists its state', () => {

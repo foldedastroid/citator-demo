@@ -54,13 +54,21 @@
     grid-template-columns: var(--sidebar-drag-width) minmax(0, 1fr);
     transition: none;
   }
+  .is-sidebar-preview-drag .app-shell {
+    grid-template-columns: 0 minmax(0, 1fr);
+  }
+  .is-sidebar-preview-drag .app-sidebar {
+    z-index: theme('zIndex.drawer');
+    box-shadow: theme('boxShadow.overlay');
+  }
   .is-sidebar-dragging .app-sidebar {
     visibility: visible;
     transform: translateX(calc(var(--sidebar-drag-width) - var(--sidebar-w)));
     transition: none;
   }
   .is-sidebar-dragging .sidebar-drag-edge {
-    left: max(0px, calc(var(--sidebar-drag-width) - 6px));
+    left: var(--sidebar-drag-edge);
+    z-index: calc(theme('zIndex.drawer') + 1);
     transition: none;
   }
   .is-resizing .sidebar-drag-edge { transition: none; }

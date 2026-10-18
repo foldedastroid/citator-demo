@@ -101,15 +101,20 @@ document.addEventListener('alpine:init', () => {
       const sidebar = document.getElementById('app-sidebar');
       if (!sidebar) return;
       event.preventDefault();
-      const visible = this.sidebarOpen || this.sidebarPeek;
+      const preview = !this.sidebarOpen;
+      const rect = sidebar.getBoundingClientRect();
+      const width = rect.width;
+      const start = Math.max(0, Math.min(width, rect.right));
+      const edge = event.currentTarget.getBoundingClientRect().left;
       this.clearSidebarPeek();
-      const width = sidebar.getBoundingClientRect().width;
       this.sidebarDrag = { id: event.pointerId, x: event.clientX, width,
-        start: visible ? width : 0, value: visible ? width : 0,
+        start, value: start, preview, edge,
         open: this.sidebarOpen, moved: false, target: event.currentTarget };
       event.currentTarget.setPointerCapture(event.pointerId);
       const root = document.documentElement;
       root.style.setProperty('--sidebar-drag-width', `${this.sidebarDrag.start}px`);
+      root.style.setProperty('--sidebar-drag-edge', `${edge}px`);
+      root.classList.toggle('is-sidebar-preview-drag', preview);
       root.classList.add('is-sidebar-dragging');
     },
     moveSidebarDrag(event) {
@@ -118,6 +123,7 @@ document.addEventListener('alpine:init', () => {
       drag.moved ||= Math.abs(event.clientX - drag.x) > 4;
       drag.value = Math.max(0, Math.min(drag.width, drag.start + event.clientX - drag.x));
       document.documentElement.style.setProperty('--sidebar-drag-width', `${drag.value}px`);
+      document.documentElement.style.setProperty('--sidebar-drag-edge', `${Math.max(0, drag.edge + event.clientX - drag.x)}px`);
     },
     finishSidebarDrag(cancelled) {
       const drag = this.sidebarDrag;
@@ -127,7 +133,9 @@ document.addEventListener('alpine:init', () => {
       this.sidebarPeekSuppressed = !this.sidebarOpen;
       const root = document.documentElement;
       root.classList.remove('is-sidebar-dragging');
+      root.classList.remove('is-sidebar-preview-drag');
       root.style.removeProperty('--sidebar-drag-width');
+      root.style.removeProperty('--sidebar-drag-edge');
       if (drag.target.hasPointerCapture(drag.id)) drag.target.releasePointerCapture(drag.id);
       if (!cancelled) shellStore(SIDEBAR_KEY, this.sidebarOpen ? 'open' : 'closed');
       this.apply();
