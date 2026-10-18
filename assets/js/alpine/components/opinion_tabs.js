@@ -56,6 +56,7 @@ document.addEventListener('alpine:init', () => {
     findExcerpts: true,
     findVisible: false,
     findRevision: 0,
+    findRunRevision: 0,
 
     findBox: null,
     lastScrollY: 0,
@@ -344,6 +345,7 @@ document.addEventListener('alpine:init', () => {
         if (open && !findMotion && focus) this.focusFind();
         return;
       }
+      if (!open) this.findRunRevision += 1;
       const card = this.$refs.findCard;
       const from = card.getBoundingClientRect().width;
       this.findPlace();
@@ -380,7 +382,13 @@ document.addEventListener('alpine:init', () => {
     },
     openFind() {
       if (this.activeTab !== 'opinion') this.showTab('opinion');
-      this.$nextTick(() => this.setFind(true));
+      const revision = this.tabRevision;
+      this.$nextTick(() => {
+        if (this.activeTab !== 'opinion' || revision !== this.tabRevision) return;
+        this.setFind(true);
+        const query = (this.$refs.findInput.value || '').trim();
+        if (query && (query !== this.find.query || !this.find.total)) this.findRun(query);
+      });
     },
     toggleFind() {
       if (this.findOpen) this.closeFind();
@@ -770,6 +778,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     findInput(event) {
+      if (!this.findOpen || this.activeTab !== 'opinion') return;
       this.findRun(event.target.value.trim());
     },
     findKeydown(event) {
@@ -784,13 +793,16 @@ document.addEventListener('alpine:init', () => {
       }
     },
     findRun(query) {
+      const revision = ++this.findRunRevision;
       this.findExcerpts = true;
       clearFindHits();
       this.find = { query, index: 0, total: 0 };
       this.$refs.findMatches.replaceChildren();
       if (query.length < 2) return;
       if (this.activeTab !== 'opinion') this.enterTab('opinion');
+      const tabRevision = this.tabRevision;
       this.$nextTick(() => {
+        if (revision !== this.findRunRevision || tabRevision !== this.tabRevision || !this.findOpen || this.activeTab !== 'opinion') return;
         const body = this.pageRoot.querySelector('.opinion-body');
         findHits = body ? markMatches(body, query) : [];
         this.find = { query, index: 0, total: findHits.length };

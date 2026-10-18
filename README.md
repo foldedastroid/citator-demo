@@ -71,6 +71,8 @@ The shell supports desktop panels and phone drawers, keyboard navigation and red
 
 `tailwind.config.js` is the design-token source. Regenerate the explicit inventory with `npm run build:tokens`; see [design/README.md](design/README.md). Repeated interface patterns use existing Nunjucks macros and component CSS rather than a second runtime framework.
 
+For a scoped upstream contribution, see my [adoption notes](docs/adoption.md).
+
 ## Checks
 
 ```sh
