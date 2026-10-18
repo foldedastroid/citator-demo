@@ -764,10 +764,10 @@
     @apply px-2.5 py-1 text-xs;
   }
   .court-modal__tabs {
-    @apply mt-4 flex gap-5 overflow-x-auto border-b border-greyscale-200 px-6;
+    @apply mt-4 flex gap-2 overflow-x-auto border-b border-greyscale-200 px-6;
   }
   .court-tab {
-    @apply -mb-px flex shrink-0 items-center gap-1.5 border-b-2 border-transparent py-2 text-sm text-greyscale-500 transition-colors hover:text-greyscale-900;
+    @apply flex shrink-0 items-center gap-1.5 border-b-2 border-transparent px-1.5 py-2 text-sm text-greyscale-500 transition-colors hover:text-greyscale-900;
   }
   .court-tab.is-active {
     @apply border-greyscale-900 font-medium text-greyscale-900;
@@ -970,20 +970,23 @@
     scroll-margin-top: calc(var(--topbar-h) + var(--case-head-h) + 1rem);
   }
   .tab-bar {
-    @apply sticky z-sticky mt-8 flex gap-6 overflow-x-auto border-b border-greyscale-200 bg-white;
+    @apply sticky z-sticky mt-8 flex gap-3 overflow-x-auto border-b border-greyscale-200 bg-white px-1;
     top: var(--topbar-h);
     height: var(--tabs-h);
     scrollbar-width: none;
   }
   .tab-bar__tab {
-    @apply -mb-px flex flex-shrink-0 items-center border-b-2 border-transparent pt-1 text-sm text-greyscale-500 transition-colors hover:text-greyscale-900;
+    @apply flex flex-shrink-0 items-center border-b-2 border-transparent px-1.5 pt-1 text-sm text-greyscale-500 transition-colors hover:text-greyscale-900;
   }
-  .tab-bar__tab:focus {
+  .tab-bar__tab:focus,
+  .court-tab:focus {
     outline: none;
   }
-  .tab-bar__tab:focus-visible {
+  .tab-bar__tab:focus-visible,
+  .court-tab:focus-visible {
+    @apply bg-primary-50;
     outline: 2px solid theme('colors.primary.600');
-    outline-offset: -4px;
+    outline-offset: -2px;
     border-radius: theme('borderRadius.control');
   }
   .tab-bar__tab.is-active {
@@ -1846,6 +1849,10 @@
   .tree-filter input {
     @apply block h-8 w-full rounded-control border border-greyscale-200 bg-white pl-8 pr-2 text-[13px] text-greyscale-900 placeholder:text-greyscale-400 focus:border-greyscale-400 focus:outline-none;
   }
+  :is(.search-box, .list-search__input, .sort-select__input, .tree-filter input):focus-visible {
+    outline: 2px solid theme('colors.primary.600');
+    outline-offset: -2px;
+  }
   .tree-filter input::-webkit-search-cancel-button {
     display: none;
   }
@@ -2233,6 +2240,9 @@
   .find:not(.is-open) .find__input,
   .find:not(.is-open) .find__close {
     visibility: hidden;
+  }
+  .find__row :is(.doc-rail__find, .find__close):focus-visible {
+    outline-offset: -4px;
   }
   .find__input::-webkit-search-cancel-button {
     appearance: none;
