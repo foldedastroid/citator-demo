@@ -189,7 +189,10 @@
     @apply pointer-events-none absolute left-0 top-0 z-tooltip m-2 -translate-y-24 rounded-control bg-primary-600 p-2 text-white opacity-0 transition-[opacity,transform] ease-in-out focus-visible:pointer-events-auto focus-visible:translate-y-0 focus-visible:opacity-100;
   }
   .desktop-notice {
-    @apply m-0 border-b border-yellow-400 bg-yellow-50 px-4 py-2 text-center text-xs leading-relaxed text-greyscale-700 md:hidden;
+    @apply hidden m-0 border-b border-yellow-400 bg-yellow-50 px-4 py-2 text-center text-xs leading-relaxed text-greyscale-700;
+  }
+  @media (hover: none) and (pointer: coarse) {
+    .desktop-notice { display: block; }
   }
   .page-with-panel {
     @apply grid gap-y-6;
