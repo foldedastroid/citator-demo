@@ -321,9 +321,6 @@
     @apply pointer-events-none absolute inset-0 z-[1] rounded-control border border-greyscale-200;
     content: '';
   }
-  .find__row:has(.find__input:focus-visible)::after {
-    @apply border-greyscale-500;
-  }
   .find__row .doc-rail__find {
     @apply relative rounded-none bg-transparent;
   }

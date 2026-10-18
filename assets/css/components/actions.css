@@ -17,7 +17,7 @@
   .split > .doc-action--caret {
     @apply m-0 w-7 rounded-l-none border-l border-greyscale-200 px-0;
   }
-  .split > .doc-action:active { transform: none; }
+  .split > .doc-action:not(:disabled):active { transform: none; }
   .split > .doc-action:focus-visible {
     outline: none;
     box-shadow: inset 0 0 0 2px theme('colors.greyscale.500');
