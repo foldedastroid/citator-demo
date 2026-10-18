@@ -38,12 +38,15 @@
     <a href="#footer" class="skip-link">Skip to footer</a>
 
     <button type="button" class="sidebar-drag-edge" tabindex="-1" aria-hidden="true"
-            title="Drag to open or close sidebar" x-on:pointerdown="startSidebarDrag"
+            title="Click or drag to open or close sidebar" x-on:pointerenter="holdSidebarPeek"
+            x-on:pointerleave="releaseSidebarPeek" x-on:pointerdown="startSidebarDrag"
             x-on:pointermove="moveSidebarDrag" x-on:pointerup="endSidebarDrag"
             x-on:pointercancel="cancelSidebarDrag" x-on:lostpointercapture="cancelSidebarDrag"></button>
     <div class="app-shell">
 
       <aside id="app-sidebar" class="app-sidebar" aria-label="Site" x-on:click="onSidebarClick"
+             x-on:pointerenter="holdSidebarPeek" x-on:pointerleave="releaseSidebarPeek"
+             x-on:focusin="holdSidebarPeek" x-on:focusout="releaseSidebarPeek"
              x-on:touchstart.passive="onSidebarTouchStart" x-on:touchmove.passive="onSidebarTouchMove" x-on:touchend="onSidebarTouchEnd">
         <header class="app-sidebar__header">
           <a href="{{ site.home }}" class="app-wordmark" title="Return to Search opinions">

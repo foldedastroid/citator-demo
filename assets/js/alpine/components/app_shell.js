@@ -25,6 +25,9 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('appShell', () => ({
     sidebarOpen: true,
     sidebarDrag: null,
+    sidebarPeek: false,
+    sidebarPeekSuppressed: false,
+    sidebarPeekTimer: 0,
     panelOpen: true,
     wide: true,
 
@@ -52,12 +55,37 @@ document.addEventListener('alpine:init', () => {
     apply() {
       const root = document.documentElement;
       root.classList.toggle('sidebar-closed', !this.sidebarOpen);
+      root.classList.toggle('sidebar-peeking', this.wide && this.sidebarPeek && !this.sidebarOpen);
       root.classList.toggle('panel-closed', !this.panelOpen);
       document.body.classList.toggle('is-modal-open', this.scrimVisible);
       const sidebar = document.getElementById('app-sidebar');
       const panel = document.getElementById('app-panel');
-      if (sidebar) sidebar.inert = !this.sidebarOpen;
+      if (sidebar) sidebar.inert = !(this.sidebarOpen || (this.wide && this.sidebarPeek));
       if (panel) panel.inert = !this.panelOpen;
+    },
+
+    holdSidebarPeek() {
+      clearTimeout(this.sidebarPeekTimer);
+      if (!this.wide || this.sidebarOpen || this.sidebarDrag || this.sidebarPeekSuppressed) return;
+      this.sidebarPeek = true;
+      this.apply();
+    },
+    releaseSidebarPeek(event) {
+      const next = event?.relatedTarget;
+      if (next?.closest?.('#app-sidebar, .sidebar-drag-edge')) return;
+      this.sidebarPeekSuppressed = false;
+      clearTimeout(this.sidebarPeekTimer);
+      if (!this.sidebarPeek || this.sidebarDrag) return;
+      this.sidebarPeekTimer = setTimeout(() => {
+        const sidebar = document.getElementById('app-sidebar');
+        if (sidebar?.contains(document.activeElement)) return;
+        this.sidebarPeek = false;
+        this.apply();
+      }, 180);
+    },
+    clearSidebarPeek() {
+      clearTimeout(this.sidebarPeekTimer);
+      this.sidebarPeek = false;
     },
 
     startSidebarDrag(event) {
@@ -65,10 +93,12 @@ document.addEventListener('alpine:init', () => {
       const sidebar = document.getElementById('app-sidebar');
       if (!sidebar) return;
       event.preventDefault();
+      const visible = this.sidebarOpen || this.sidebarPeek;
+      this.clearSidebarPeek();
       const width = sidebar.getBoundingClientRect().width;
       this.sidebarDrag = { id: event.pointerId, x: event.clientX, width,
-        start: this.sidebarOpen ? width : 0, value: this.sidebarOpen ? width : 0,
-        open: this.sidebarOpen, target: event.currentTarget };
+        start: visible ? width : 0, value: visible ? width : 0,
+        open: this.sidebarOpen, moved: false, target: event.currentTarget };
       event.currentTarget.setPointerCapture(event.pointerId);
       const root = document.documentElement;
       root.style.setProperty('--sidebar-drag-width', `${this.sidebarDrag.start}px`);
@@ -77,6 +107,7 @@ document.addEventListener('alpine:init', () => {
     moveSidebarDrag(event) {
       const drag = this.sidebarDrag;
       if (!drag || event.pointerId !== drag.id) return;
+      drag.moved ||= Math.abs(event.clientX - drag.x) > 4;
       drag.value = Math.max(0, Math.min(drag.width, drag.start + event.clientX - drag.x));
       document.documentElement.style.setProperty('--sidebar-drag-width', `${drag.value}px`);
     },
@@ -84,7 +115,8 @@ document.addEventListener('alpine:init', () => {
       const drag = this.sidebarDrag;
       if (!drag) return;
       this.sidebarDrag = null;
-      this.sidebarOpen = cancelled ? drag.open : drag.value >= drag.width / 2;
+      this.sidebarOpen = cancelled ? drag.open : !drag.moved ? !drag.open : drag.value >= drag.width / 2;
+      this.sidebarPeekSuppressed = !this.sidebarOpen;
       const root = document.documentElement;
       root.classList.remove('is-sidebar-dragging');
       root.style.removeProperty('--sidebar-drag-width');
@@ -101,7 +133,9 @@ document.addEventListener('alpine:init', () => {
     },
 
     toggleSidebar() {
+      this.clearSidebarPeek();
       this.sidebarOpen = !this.sidebarOpen;
+      this.sidebarPeekSuppressed = !this.sidebarOpen;
       if (this.wide) shellStore(SIDEBAR_KEY, this.sidebarOpen ? 'open' : 'closed');
       else if (this.sidebarOpen) this.panelOpen = false;
       this.apply();
@@ -143,7 +177,8 @@ document.addEventListener('alpine:init', () => {
     },
 
     onSidebarClick(event) {
-      if (!this.wide && event.target.closest('a')) {
+      if ((!this.wide || this.sidebarPeek) && event.target.closest('a')) {
+        this.clearSidebarPeek();
         this.sidebarOpen = false;
         this.apply();
       }
@@ -165,6 +200,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     syncWidth(wide) {
+      this.clearSidebarPeek();
       this.wide = wide;
       this.sidebarOpen = wide && shellStored(SIDEBAR_KEY) !== 'closed';
       this.panelOpen = wide && shellStored(PANEL_KEY) !== 'closed';
@@ -186,6 +222,8 @@ document.addEventListener('alpine:init', () => {
 
     onKeydown(event) {
       if (event.key === 'Escape') {
+        this.clearSidebarPeek();
+        this.apply();
         this.cancelSidebarDrag();
         this.closeDrawer();
         return;
@@ -220,6 +258,7 @@ document.addEventListener('alpine:init', () => {
       document.addEventListener('click', (e) => this.onPanelClick(e));
     },
     destroy() {
+      this.clearSidebarPeek();
       this.cancelSidebarDrag();
       cancelAnimationFrame(this.resizeFrame);
       window.removeEventListener('resize', this.resizeHandler);

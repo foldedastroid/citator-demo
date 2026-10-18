@@ -51,6 +51,7 @@ test('sidebar edge drag settles, persists, reopens, and restores on cancellation
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/alpine/components/app_shell.js'), 'utf8'), {
     document: { documentElement: root, addEventListener: (_, f) => f(),
       getElementById: () => ({ getBoundingClientRect: () => ({ width: 248 }) }) },
+    clearTimeout() {},
     localStorage: { setItem: (k, v) => saved.set(k, v) },
     Alpine: { data: (_, f) => { factory = f; } },
   });
@@ -76,4 +77,32 @@ test('sidebar edge drag settles, persists, reopens, and restores on cancellation
   assert.equal(state.sidebarOpen, true);
   assert.equal(classes.has('is-sidebar-dragging'), false);
   assert.equal(styles.has('--sidebar-drag-width'), false);
+});
+
+test('hover preview closes after leaving, preserves focused content, and never persists its state', () => {
+  let factory, pending;
+  const sidebar = { contains: el => el === 'inside' };
+  const document = { activeElement: null, getElementById: () => sidebar, addEventListener: (_, fn) => fn() };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../assets/js/alpine/components/app_shell.js'), 'utf8'), {
+    document, Alpine: { data: (_, fn) => { factory = fn; } },
+    clearTimeout() { pending = null; }, setTimeout(fn) { pending = fn; return 1; },
+    localStorage: { setItem() { throw new Error('Hover must not persist state'); } },
+  });
+  const state = factory();
+  state.apply = () => {};
+  state.sidebarOpen = false;
+  state.holdSidebarPeek();
+  assert.equal(state.sidebarPeek, true);
+  assert.equal(state.sidebarOpen, false);
+  state.releaseSidebarPeek();
+  document.activeElement = 'inside';
+  pending();
+  assert.equal(state.sidebarPeek, true);
+  document.activeElement = null;
+  state.releaseSidebarPeek();
+  pending();
+  assert.equal(state.sidebarPeek, false);
+  state.sidebarOpen = true;
+  state.holdSidebarPeek();
+  assert.equal(state.sidebarPeek, false);
 });
