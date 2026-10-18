@@ -18,6 +18,9 @@
   .start-panel__button {
     @apply inline-flex items-center gap-1.5 rounded-control bg-primary-600 px-3.5 py-1.5 text-sm font-medium text-white no-underline transition-colors hover:bg-primary-700;
   }
+  :is(.court-done, .start-panel__button, .feedback-card):not(:disabled):active {
+    @apply bg-primary-800 text-white;
+  }
   .court-btn,
   .court-open {
     @apply inline-flex items-center rounded-control border border-greyscale-200 bg-white px-3 py-1.5 text-sm font-medium text-greyscale-800 transition-colors hover:border-greyscale-300 hover:bg-greyscale-50;

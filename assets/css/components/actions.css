@@ -129,7 +129,7 @@
     transition-duration: theme('transitionDuration.feedback');
     transition-timing-function: theme('transitionTimingFunction.standard');
   }
-  :is(.doc-action, .list-filter__summary, .start-panel__button, .sel-bar__btn, .home-pager__btn, .court-open, .court-btn, .court-chip, .sev-toggle):not(:disabled):active {
+  :is(.doc-action, .list-filter__summary, .sel-bar__btn, .home-pager__btn, .court-open, .court-btn, .court-chip, .sev-toggle):not(:disabled):active {
     @apply bg-greyscale-100;
     transform: translateY(1px);
   }
